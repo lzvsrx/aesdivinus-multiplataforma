@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild -version
-          curl -L -o godot_macos.zip "https://github.com/godotengine/godot-builds/releases/download/3.6.1-stable/Godot_v3.6.1-stable_osx.universal.zip"
+          curl -fL -o godot_macos.zip "https://downloads.godotengine.org/?flavor=stable&platform=macos.universal&slug=osx.universal.zip&version=3.6.1"
           unzip -q godot_macos.zip -d "$HOME/godot3"
           GODOT_APP="$(find "$HOME/godot3" -name 'Godot*.app' -maxdepth 2 | head -n 1)"
           echo "GODOT_BIN=$GODOT_APP/Contents/MacOS/Godot" >> "$GITHUB_ENV"
@@ -31,7 +31,7 @@ jobs:
       - name: Install Godot 3.6.1 export templates
         run: |
           set -euo pipefail
-          curl -L -o templates.tpz "https://github.com/godotengine/godot-builds/releases/download/3.6.1-stable/Godot_v3.6.1-stable_export_templates.tpz"
+          curl -fL -o templates.tpz "https://downloads.godotengine.org/?flavor=stable&platform=templates&slug=export_templates.tpz&version=3.6.1"
           unzip -q templates.tpz -d templates_unpacked
           mkdir -p "$HOME/Library/Application Support/Godot/templates/3.6.1.stable"
           mkdir -p "$HOME/Library/Application Support/Godot/export_templates/3.6.1.stable"
