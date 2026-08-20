@@ -1,7 +1,7 @@
 extends Node2D
 
 const DB_PATH = "user://aesdivinus_ios12_db.json"
-const BUILD_VERSION = "1.4.1-ios12"
+const BUILD_VERSION = "1.4.2-ios12"
 const DEVELOPER_NAME = "Espíritos dos jogos"
 const DEVELOPER_MOTTO = "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 const W = 1024
@@ -145,6 +145,7 @@ var codex_i = 0
 
 func _ready():
 	randomize()
+	_configure_mobile_orientation()
 	var font_source = Label.new()
 	add_child(font_source)
 	ui_font = font_source.get_font("font")
@@ -156,6 +157,10 @@ func _ready():
 	_apply_settings()
 	if OS.get_cmdline_args().has("--smoke-test"):
 		_run_smoke_test()
+
+func _configure_mobile_orientation():
+	if OS.has_feature("iOS") or OS.has_feature("mobile"):
+		OS.set_screen_orientation(OS.SCREEN_ORIENTATION_SENSOR_LANDSCAPE)
 
 func _process(delta):
 	t += delta

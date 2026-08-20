@@ -6,7 +6,7 @@ const PLAYER_SIZE := Vector2(34, 56)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.1"
+const BUILD_VERSION := "1.4.2"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -441,6 +441,7 @@ var panel_label: Label
 func _ready() -> void:
 	randomize()
 	_ensure_runtime_input_actions()
+	_configure_mobile_orientation()
 	_db_load()
 	_normalize_player_runtime_data()
 	_build_ui()
@@ -461,15 +462,22 @@ func _is_touch_build() -> bool:
 	return OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web")
 
 
+func _configure_mobile_orientation() -> void:
+	if OS.has_feature("android") or OS.has_feature("ios"):
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
+
+
 func _touch_buttons() -> Array[Dictionary]:
-	if not game_started or paused or overlay != "" or game_over or victory:
+	if not game_started:
+		return []
+	if paused or overlay != "" or game_over or victory:
 		return [
-			{"id": "up", "label": "W", "action": "menu_up", "rect": Rect2(78, 442, 70, 58)},
-			{"id": "down", "label": "S", "action": "menu_down", "rect": Rect2(78, 570, 70, 58)},
-			{"id": "left", "label": "A", "action": "menu_left", "rect": Rect2(8, 506, 70, 58)},
-			{"id": "right", "label": "D", "action": "menu_right", "rect": Rect2(148, 506, 70, 58)},
-			{"id": "back", "label": "Q", "action": "divine_mark", "rect": Rect2(1000, 596, 86, 62)},
-			{"id": "ok", "label": "E", "action": "interact", "rect": Rect2(1110, 586, 104, 72)}
+			{"id": "up", "label": "^", "action": "menu_up", "rect": Rect2(78, 442, 70, 58)},
+			{"id": "down", "label": "v", "action": "menu_down", "rect": Rect2(78, 570, 70, 58)},
+			{"id": "left", "label": "<", "action": "menu_left", "rect": Rect2(8, 506, 70, 58)},
+			{"id": "right", "label": ">", "action": "menu_right", "rect": Rect2(148, 506, 70, 58)},
+			{"id": "back", "label": "Q", "action": "divine_mark", "rect": Rect2(998, 598, 86, 62)},
+			{"id": "ok", "label": "OK", "action": "interact", "rect": Rect2(1108, 588, 104, 72)}
 		]
 	return [
 		{"id": "left", "label": "<", "action": "move_left", "rect": Rect2(34, 578, 86, 72)},
@@ -490,6 +498,9 @@ func _handle_touch_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
+			if not game_started and _handle_frontend_touch(touch.position):
+				get_viewport().set_input_as_handled()
+				return
 			for button in _touch_buttons():
 				var rect: Rect2 = button.rect
 				if rect.has_point(touch.position):
@@ -503,6 +514,98 @@ func _handle_touch_input(event: InputEvent) -> void:
 				Input.action_release(String(touch_points[touch.index]))
 				touch_points.erase(touch.index)
 				get_viewport().set_input_as_handled()
+
+
+func _handle_frontend_touch(pos: Vector2) -> bool:
+	var rows := _frontend_touch_rows()
+	for row in rows:
+		var rect: Rect2 = row.rect
+		if rect.has_point(pos):
+			_select_frontend_touch_row(int(row.index), bool(row.get("activate", true)))
+			return true
+	return false
+
+
+func _frontend_touch_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	if auth_screen == "login" or auth_screen == "register":
+		for i in range(5):
+			rows.append({"index": i, "rect": Rect2(800, 82 + i * 28, 454, 30), "activate": i >= 2})
+	elif auth_screen == "character_create":
+		for i in range(4):
+			rows.append({"index": i, "rect": Rect2(800, 82 + i * 28, 454, 30), "activate": i > 0})
+		rows.append({"index": 4, "rect": Rect2(800, 214, 454, 42), "activate": true})
+	elif auth_screen == "main_menu":
+		for i in range(main_menu_options.size()):
+			rows.append({"index": i, "rect": Rect2(800, 82 + i * 28, 454, 30), "activate": true})
+	elif auth_screen == "systems":
+		rows.append({"index": -1, "rect": Rect2(800, 82, 180, 56), "activate": true})
+		rows.append({"index": 1, "rect": Rect2(1040, 82, 180, 56), "activate": true})
+		rows.append({"index": 99, "rect": Rect2(800, 216, 454, 42), "activate": true})
+	return rows
+
+
+func _select_frontend_touch_row(index: int, activate: bool) -> void:
+	match auth_screen:
+		"login":
+			auth_index = clampi(index, 0, 4)
+			if activate:
+				if auth_index == 2:
+					if _login_user(account.email, login_password):
+						_set_auth_screen("main_menu")
+						_show_banner("Login realizado.")
+					else:
+						_show_banner(auth_message)
+				elif auth_index == 3:
+					_set_auth_screen("register")
+					auth_index = 0
+				elif auth_index == 4:
+					_guest_login()
+					_set_auth_screen("main_menu")
+					_show_banner("Entrou como convidado.")
+		"register":
+			auth_index = clampi(index, 0, 4)
+			if activate:
+				if auth_index == 3:
+					if _register_user(account.name, account.email, register_password):
+						_set_auth_screen("character_create")
+						auth_index = 0
+						_show_banner("Usuario cadastrado no banco local.")
+					else:
+						_show_banner(auth_message)
+				elif auth_index == 4:
+					_set_auth_screen("login")
+					auth_index = 0
+		"character_create":
+			if index < 4:
+				character_field_index = clampi(index, 0, 3)
+				if activate:
+					_cycle_character_field(1)
+			elif character_profile.name.strip_edges().length() >= 2:
+				character_profile.name = character_profile.name.strip_edges()
+				character_profile.type = character_type_options[character_type_index]
+				character_profile.class = class_options[character_class_index]
+				character_profile.origin = origin_options[character_origin_index]
+				character_profile.created = true
+				_apply_character_template()
+				_db_upsert_character()
+				_record_action("character_created", character_profile.duplicate(true))
+				_save_game()
+				_set_auth_screen("main_menu")
+				_show_banner("Personagem criado.")
+			else:
+				_show_banner("Digite um nome com pelo menos 2 letras.")
+		"main_menu":
+			main_menu_index = clampi(index, 0, main_menu_options.size() - 1)
+			_activate_main_menu()
+		"systems":
+			if index < 0:
+				_cycle_overlay(-1)
+			elif index == 1:
+				_cycle_overlay(1)
+			else:
+				_set_auth_screen("main_menu")
+				overlay = ""
 
 
 func _unhandled_input(event: InputEvent) -> void:
