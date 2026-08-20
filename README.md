@@ -146,6 +146,18 @@ iOS:
 .\export_ios.ps1
 ```
 
+iPad Air com iOS 12.5.8:
+
+```powershell
+.\export_ios_ipad_air.ps1 -TeamId SEUTEAMID1
+```
+
+No macOS:
+
+```bash
+AESDIVINUS_APPLE_TEAM_ID=SEUTEAMID1 ./export_ios_ipad_air.command
+```
+
 Todas as plataformas:
 
 ```powershell
@@ -166,4 +178,5 @@ Observacoes:
 - Windows e Linux usam os Export Templates do Godot.
 - Android precisa de Export Templates, Android SDK/JDK e build-tools. O script cria/usa uma keystore local em `android\keystores\aesdivinus-release.keystore`, assina o APK e valida com `apksigner`.
 - No Windows, o script de iOS gera o `.pck` do jogo para validar o conteudo exportavel. Para gerar, assinar e rodar o app iOS completo em iPhone/iPad, use macOS com Xcode, Apple Developer Team ID, certificados e provisioning profile.
+- O alvo iPad Air/iOS 12.5.8 esta configurado no preset e documentado em `docs\platforms\ios_12_ipad_air.md`, mas Godot 4.7 pode nao ter runtime real para iOS 12.5.8 em hardware A7. Se falhar no aparelho, sera necessario um port legacy para Godot 3.x ou templates iOS customizados.
 - O jogo tem controles virtuais de toque em Android/iOS/Web para menus e gameplay.
