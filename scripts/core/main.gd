@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.5.1"
+const BUILD_VERSION := "1.6.0"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -210,6 +210,10 @@ var touch_points := {}
 var auth_index := 0
 var active_virtual_keyboard_field := ""
 var main_menu_index := 0
+var turn_target_index := 0
+var turn_guarding := false
+var turn_evading := false
+var turn_log := "Escolha uma acao de turno."
 var inventory_index := 0
 var settings_index := 0
 var equipment_index := 0
@@ -537,14 +541,14 @@ func _touch_buttons() -> Array[Dictionary]:
 			{"id": "ok", "label": "OK", "action": "interact", "rect": _to_screen_rect(Rect2(1108, 588, 104, 72))}
 		]
 	return [
-		{"id": "left", "label": "<", "action": "move_left", "rect": _to_screen_rect(Rect2(34, 602, 94, 72))},
-		{"id": "right", "label": ">", "action": "move_right", "rect": _to_screen_rect(Rect2(148, 602, 94, 72))},
-		{"id": "run", "label": "CORRER", "action": "run", "rect": _to_screen_rect(Rect2(86, 520, 112, 60))},
-		{"id": "mark", "label": "MARCA", "action": "divine_mark", "rect": _to_screen_rect(Rect2(914, 522, 104, 58))},
-		{"id": "jump", "label": "PULAR", "action": "jump", "rect": _to_screen_rect(Rect2(1032, 510, 106, 70))},
-		{"id": "interact", "label": "ACAO", "action": "interact", "rect": _to_screen_rect(Rect2(1152, 510, 92, 70))},
+		{"id": "left", "label": "ALVO-", "action": "move_left", "rect": _to_screen_rect(Rect2(34, 602, 98, 68))},
+		{"id": "right", "label": "ALVO+", "action": "move_right", "rect": _to_screen_rect(Rect2(148, 602, 98, 68))},
+		{"id": "run", "label": "EXPLORAR", "action": "run", "rect": _to_screen_rect(Rect2(78, 522, 138, 58))},
+		{"id": "mark", "label": "MARCA", "action": "divine_mark", "rect": _to_screen_rect(Rect2(900, 522, 104, 58))},
+		{"id": "jump", "label": "ITEM", "action": "jump", "rect": _to_screen_rect(Rect2(1018, 522, 104, 58))},
+		{"id": "interact", "label": "ACAO", "action": "interact", "rect": _to_screen_rect(Rect2(1136, 522, 104, 58))},
 		{"id": "dodge", "label": "ESQUIVA", "action": "dodge", "rect": _to_screen_rect(Rect2(900, 604, 104, 66))},
-		{"id": "block", "label": "BLOQ.", "action": "block", "rect": _to_screen_rect(Rect2(1018, 604, 104, 66))},
+		{"id": "block", "label": "GUARDA", "action": "block", "rect": _to_screen_rect(Rect2(1018, 604, 104, 66))},
 		{"id": "attack", "label": "ATACAR", "action": "attack", "rect": _to_screen_rect(Rect2(1136, 594, 108, 76))}
 	]
 
@@ -590,7 +594,7 @@ func _frontend_touch_rows() -> Array[Dictionary]:
 			rows.append({
 				"index": i,
 				"rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)),
-				"visual_rect": _to_screen_rect(Rect2(1064, 84 + i * 28, 166, 22)),
+				"visual_rect": _to_screen_rect(Rect2(958, 84 + i * 28, 272, 22)),
 				"activate": i >= 2
 			})
 	elif auth_screen == "character_create":
@@ -972,6 +976,10 @@ func _load_map(idx: int) -> void:
 	player.vel = Vector2.ZERO
 	player.state = "IDLE"
 	player.lock = 0
+	turn_target_index = 0
+	turn_guarding = false
+	turn_evading = false
+	turn_log = "Turno do herdeiro: escolha Atacar, Guarda, Esquiva, Marca, Item ou Explorar."
 	enemies = []
 	items = []
 	npcs = []
@@ -1095,11 +1103,8 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 		return
 	_update_timers(delta)
-	_handle_player(delta)
-	_update_enemies(delta)
+	_handle_turn_commands()
 	_update_particles(delta)
-	_update_checkpoint()
-	_check_map_exit()
 	_update_ui()
 	queue_redraw()
 
@@ -1851,6 +1856,289 @@ func _update_timers(delta: float) -> void:
 	floating_text = floating_text.filter(func(t): return t.life > 0)
 
 
+func _handle_turn_commands() -> void:
+	player.vel = Vector2.ZERO
+	player.on_floor = true
+	player.pos.y = FLOOR_Y
+	boss_mode = _living_enemies().any(func(e): return String(e.get("type", "")) == "boss")
+	if Input.is_action_just_pressed("move_left"):
+		_cycle_turn_target(-1)
+		return
+	if Input.is_action_just_pressed("move_right"):
+		_cycle_turn_target(1)
+		return
+	if Input.is_action_just_pressed("attack"):
+		_player_turn_attack(false)
+		return
+	if Input.is_action_just_pressed("interact"):
+		if _living_enemies().is_empty():
+			_turn_explore()
+		else:
+			_player_turn_attack(true)
+		return
+	if Input.is_action_just_pressed("block"):
+		_player_turn_guard()
+		return
+	if Input.is_action_just_pressed("dodge"):
+		_player_turn_evade()
+		return
+	if Input.is_action_just_pressed("divine_mark"):
+		_player_turn_mark()
+		return
+	if Input.is_action_just_pressed("jump"):
+		_player_turn_item()
+		return
+	if Input.is_action_just_pressed("run"):
+		_turn_explore()
+		return
+	_focus_turn_camera()
+
+
+func _living_enemies() -> Array:
+	return enemies.filter(func(e): return not bool(e.get("dead", false)) and int(e.get("hp", 0)) > 0)
+
+
+func _current_turn_target() -> Dictionary:
+	var living := _living_enemies()
+	if living.is_empty():
+		return {}
+	turn_target_index = wrapi(turn_target_index, 0, living.size())
+	return living[turn_target_index]
+
+
+func _cycle_turn_target(step: int) -> void:
+	var living := _living_enemies()
+	if living.is_empty():
+		turn_log = "Nao ha inimigos. Use Explorar para seguir pela floresta."
+		_show_banner(turn_log)
+		return
+	turn_target_index = wrapi(turn_target_index + step, 0, living.size())
+	var target := _current_turn_target()
+	turn_log = "Alvo: %s." % String(target.get("name", "Inimigo"))
+	_show_banner(turn_log)
+	_focus_turn_camera()
+
+
+func _focus_turn_camera() -> void:
+	var target := _current_turn_target()
+	if target.is_empty():
+		camera_x = clampf(player.pos.x - 420, 0, WORLD_W - 1280)
+		return
+	var enemy_pos: Vector2 = target.pos
+	player.facing = signi(enemy_pos.x - player.pos.x)
+	if player.facing == 0:
+		player.facing = 1
+	var mid := (player.pos.x + enemy_pos.x) * 0.5
+	camera_x = clampf(mid - 640, 0, WORLD_W - 1280)
+
+
+func _snap_player_to_turn_target(target: Dictionary) -> void:
+	if target.is_empty():
+		return
+	var enemy_pos: Vector2 = target.pos
+	player.facing = -1 if enemy_pos.x < player.pos.x else 1
+	player.pos.x = clampf(enemy_pos.x - player.facing * 116.0, 40, WORLD_W - 40)
+	player.pos.y = FLOOR_Y
+	_focus_turn_camera()
+
+
+func _turn_base_damage(heavy: bool) -> int:
+	var weapon_name := String(player.equipment.get("weapon", "Espada de Gradon"))
+	var weapon_level := int(player.weapon_levels.get(weapon_name, 1))
+	var weapon_data: Dictionary = weapon_catalog.get(weapon_name, weapon_catalog["Espada de Gradon"])
+	var damage := (34 if heavy else 22) + int(weapon_data.base_damage) + weapon_level * 4
+	damage += int(player.skills.get("Forca", 0)) * 4
+	if String(weapon_data.type) == "axe" and heavy:
+		damage += 10
+	elif String(weapon_data.type) == "rapier" and not heavy:
+		damage += 5
+	elif String(weapon_data.type) == "staff":
+		player.courage = minf(100, player.courage + 3)
+	return damage
+
+
+func _player_turn_attack(heavy: bool) -> void:
+	var target := _current_turn_target()
+	if target.is_empty():
+		turn_log = "Nada para atacar. Explore o caminho."
+		_show_banner(turn_log)
+		return
+	var cost := 24.0 if heavy else 10.0
+	if player.stamina < cost:
+		turn_log = "Sem stamina. Use Guarda, Item ou Explorar."
+		_show_banner(turn_log)
+		return
+	turn_guarding = false
+	turn_evading = false
+	_snap_player_to_turn_target(target)
+	player.stamina = maxf(0, player.stamina - cost)
+	player.state = "HEAVY_ATTACK" if heavy else "ATTACK"
+	player.attack_timer = 0.25
+	var damage := _turn_base_damage(heavy)
+	var weapon_name := String(player.equipment.get("weapon", "Espada de Gradon"))
+	if weapon_name.contains("Aes") and _is_corrupted_enemy(target):
+		damage += 18 + int(player.weapon_levels.get(weapon_name, 1)) * 3
+		_float_text(target.pos + Vector2(0, -106), "AES", Color("#79d7a5"))
+	_damage_enemy(target, damage, player.facing)
+	turn_log = "%s golpeia %s por %d." % [character_profile.name, String(target.get("name", "inimigo")), damage]
+	_show_banner(turn_log)
+	_spawn_spark(target.pos + Vector2(0, -40), Color("#f0d06a"))
+	_after_player_turn()
+
+
+func _player_turn_guard() -> void:
+	turn_guarding = true
+	turn_evading = false
+	player.state = "BLOCK"
+	player.stamina = minf(100, player.stamina + 18 + int(player.skills.get("Defesa", 0)) * 2)
+	turn_log = "%s ergue a guarda e recupera folego." % character_profile.name
+	_show_banner(turn_log)
+	_after_player_turn()
+
+
+func _player_turn_evade() -> void:
+	if player.stamina < 14:
+		turn_log = "Stamina baixa para esquivar."
+		_show_banner(turn_log)
+		return
+	turn_guarding = false
+	turn_evading = true
+	player.stamina = maxf(0, player.stamina - 14)
+	player.state = "DODGE"
+	turn_log = "%s prepara uma esquiva curta." % character_profile.name
+	_show_banner(turn_log)
+	_after_player_turn()
+
+
+func _player_turn_mark() -> void:
+	if player.special_cd > 0 or player.courage < 25:
+		turn_log = "A Marca Divina ainda nao responde."
+		_show_banner(turn_log)
+		return
+	turn_guarding = false
+	turn_evading = false
+	_divine_mark()
+	turn_log = "A Marca Divina pulsa contra a corrupcao."
+	_show_banner(turn_log)
+	_after_player_turn()
+
+
+func _player_turn_item() -> void:
+	if int(player.inventory.get("Racao", 0)) <= 0:
+		turn_log = "Sem Racao. Compre ou encontre suprimentos."
+		_show_banner(turn_log)
+		return
+	player.inventory["Racao"] = int(player.inventory.get("Racao", 0)) - 1
+	player.hp = mini(player.max_hp, player.hp + 34 + int(player.instincts.get("Sobrevivencia", 0)) * 4)
+	player.stamina = minf(100, player.stamina + 18)
+	player.state = "ITEM"
+	turn_log = "%s usa Racao e se recompoe." % character_profile.name
+	_show_banner(turn_log)
+	_record_action("turn_item_used", {"item": "Racao", "map": maps[map_index].id})
+	_after_player_turn()
+
+
+func _after_player_turn() -> void:
+	_cleanup_turn_targets()
+	if _living_enemies().is_empty():
+		turn_guarding = false
+		turn_evading = false
+		_check_map_exit()
+		_save_game()
+		return
+	_enemy_turn()
+	_cleanup_turn_targets()
+	_focus_turn_camera()
+	if player.hp > 0:
+		player.state = "IDLE"
+
+
+func _cleanup_turn_targets() -> void:
+	var living := _living_enemies()
+	if living.is_empty():
+		turn_target_index = 0
+	else:
+		turn_target_index = clampi(turn_target_index, 0, living.size() - 1)
+
+
+func _enemy_turn() -> void:
+	var living := _living_enemies()
+	if living.is_empty() or game_over:
+		return
+	var attackers := living.slice(0, mini(2, living.size()))
+	for enemy in attackers:
+		_turn_enemy_attack(enemy)
+		if game_over:
+			return
+	turn_guarding = false
+	turn_evading = false
+
+
+func _turn_enemy_attack(enemy: Dictionary) -> void:
+	enemy.state = "ATTACK"
+	var damage := 10
+	match String(enemy.get("type", "")):
+		"canis":
+			damage = 14
+		"servi":
+			damage = 13
+		"ignis":
+			damage = 20
+		"boss":
+			damage = 26
+		_:
+			damage = 12
+	if turn_evading:
+		var chance := 50 + int(player.skills.get("Agilidade", 0)) * 7 + int(player.instincts.get("Percepcao", 0)) * 5
+		if randi() % 100 < clampi(chance, 45, 85):
+			_float_text(player.pos + Vector2(0, -78), "ESQUIVA", Color("#9fd6ff"))
+			turn_log = "%s erra o ataque." % String(enemy.get("name", "Inimigo"))
+			return
+		damage = maxi(1, int(round(damage * 0.55)))
+	if turn_guarding:
+		damage = maxi(1, int(round(damage * 0.38)) - int(player.skills.get("Defesa", 0)))
+		_float_text(player.pos + Vector2(0, -78), "GUARDA", Color("#9fd6ff"))
+	_damage_player(damage, signi(player.pos.x - float(enemy.pos.x)))
+	turn_log = "%s causa %d de dano." % [String(enemy.get("name", "Inimigo")), damage]
+
+
+func _turn_explore() -> void:
+	if not _living_enemies().is_empty():
+		turn_log = "Os inimigos bloqueiam o caminho. Vença o turno antes de explorar."
+		_show_banner(turn_log)
+		_enemy_turn()
+		return
+	if _try_nearby_interaction():
+		return
+	player.state = "EXPLORE"
+	player.pos.x = clampf(player.pos.x + 460, 40, WORLD_W - 60)
+	turn_log = "%s avanca pela %s." % [character_profile.name, maps[map_index].title]
+	_show_banner(turn_log)
+	_try_nearby_interaction()
+	_update_checkpoint()
+	_check_map_exit()
+	_focus_turn_camera()
+
+
+func _try_nearby_interaction() -> bool:
+	for item in items:
+		if not bool(item.get("taken", false)) and absf(float(item.pos.x) - player.pos.x) < 95:
+			item.taken = true
+			player.inventory[item.name] = int(player.inventory.get(item.name, 0)) + int(item.amount)
+			_record_action("item_collected", {"item": item.name, "amount": item.amount, "map": maps[map_index].id})
+			_save_game()
+			turn_log = "%s x%d coletado." % [String(item.name), int(item.amount)]
+			_show_banner(turn_log)
+			return true
+	for npc in npcs:
+		if absf(float(npc.pos.x) - player.pos.x) < 105:
+			dialogue = {"active": true, "name": npc.name, "lines": npc.lines, "index": 0}
+			paused = true
+			turn_log = "Conversa iniciada com %s." % String(npc.name)
+			return true
+	return false
+
+
 func _handle_player(delta: float) -> void:
 	var dir: float = Input.get_axis("move_left", "move_right")
 	var can_move: bool = player.lock <= 0
@@ -2167,7 +2455,7 @@ func _update_ui() -> void:
 	stamina_bar.size.x = 210 * player.stamina / 100.0
 	courage_bar.size.x = 190 * player.courage / 100.0
 	var data: Dictionary = maps[map_index]
-	title_label.text = "AESDIVINUS | %s" % auth_screen if not game_started else "%s | %s" % [data.title, player.state]
+	title_label.text = "AESDIVINUS | %s" % auth_screen if not game_started else "%s | TURNO %s" % [data.title, player.state]
 	hint_label.text = _hint_text()
 	title_label.position = offset + Vector2(22, 88)
 	hint_label.visible = not (_is_touch_build() and game_started and overlay == "" and not game_over and not victory)
@@ -2212,7 +2500,7 @@ func _hint_text() -> String:
 	for item in items:
 		if not item.taken and absf(item.pos.x - player.pos.x) < 70:
 			return "E Coletar"
-	return "A/D mover | Shift correr | Espaco pular | J atacar | K esquivar | L bloquear | Q Marca Divina | I/O/C/U/M/F/V/P/R/T/B telas"
+	return "A/D alvo | J atacar | E golpe forte/acao | K esquiva | L guarda | Q Marca | Espaco item | Shift explorar | I/O/C/U/M/F/V/P/R/T/B telas"
 
 
 func _panel_text() -> String:
@@ -2249,7 +2537,11 @@ func _panel_text() -> String:
 	if overlay == "flow":
 		return _flow_panel_text()
 	var living := enemies.filter(func(e): return not e.dead).size()
-	var text := "%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s" % [maps[map_index].goal, living, player.loyalty, "pronta" if player.special_cd <= 0 else "%.1fs" % player.special_cd]
+	var target := _current_turn_target()
+	var target_line := "Alvo: nenhum"
+	if not target.is_empty():
+		target_line = "Alvo: %s HP %d/%d" % [String(target.get("name", "Inimigo")), int(target.get("hp", 0)), int(target.get("max_hp", 1))]
+	var text := "%s\nModo: RPG de turno\n%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s\n\n%s" % [maps[map_index].goal, target_line, living, player.loyalty, "pronta" if player.special_cd <= 0 else "%.1fs" % player.special_cd, turn_log]
 	if banner_timer > 0:
 		text += "\n\n" + banner
 	return text
@@ -2257,6 +2549,8 @@ func _panel_text() -> String:
 
 func _frontend_panel_text() -> String:
 	if auth_screen == "login":
+		if _is_touch_build():
+			return "PORTAO DE GRADON\n\nConta: %s\nStatus: %s\n\nToque nos campos para digitar e nas acoes para entrar." % [account.email, auth_message]
 		var options := [
 			"Email: %s" % account.email,
 			"Senha: %s" % _mask_text(login_password),
@@ -2270,6 +2564,8 @@ func _frontend_panel_text() -> String:
 			auth_message
 		]
 	if auth_screen == "register":
+		if _is_touch_build():
+			return "JURAMENTO\n\nBanco local: user://aesdivinus_db.json\nStatus: %s\n\nToque nos campos, crie usuario e siga para o personagem." % auth_message
 		var options := [
 			"Nome: %s" % account.name,
 			"Email: %s" % account.email,
@@ -2658,7 +2954,6 @@ func _draw_world() -> void:
 func _draw_player() -> void:
 	var p: Vector2 = player.pos - Vector2(camera_x, 0)
 	_draw_character_model(character_profile.get("type", "William"), p, player.facing, 1.0, player.state)
-	_draw_character_weapon(p, player.facing, 1.0, _equipped_weapon_visual_type(), player.state)
 	if player.state == "BLOCK":
 		draw_rect(Rect2(p.x + player.facing * 24 - 8, p.y - 50, 16, 36), Color("#8e7749"))
 	if player.charge > 0:
@@ -2940,9 +3235,21 @@ func _frontend_touch_row_selected(index: int) -> bool:
 func _frontend_touch_row_label(index: int) -> String:
 	match auth_screen:
 		"login":
-			return ["EMAIL", "SENHA", "ENTRAR", "CADASTRO", "VISITANTE"][clampi(index, 0, 4)]
+			return [
+				"EMAIL: " + (account.email if account.email.length() > 0 else "..."),
+				"SENHA: " + (_mask_text(login_password) if login_password.length() > 0 else "..."),
+				"ENTRAR",
+				"CADASTRO",
+				"VISITANTE"
+			][clampi(index, 0, 4)]
 		"register":
-			return ["NOME", "EMAIL", "SENHA", "CRIAR", "LOGIN"][clampi(index, 0, 4)]
+			return [
+				"NOME: " + (account.name if account.name.length() > 0 else "..."),
+				"EMAIL: " + (account.email if account.email.length() > 0 else "..."),
+				"SENHA: " + (_mask_text(register_password) if register_password.length() > 0 else "..."),
+				"CRIAR",
+				"LOGIN"
+			][clampi(index, 0, 4)]
 		"character_create":
 			return ["NOME", "TIPO", "CLASSE", "ORIGEM", "INICIAR"][clampi(index, 0, 4)]
 		"main_menu":

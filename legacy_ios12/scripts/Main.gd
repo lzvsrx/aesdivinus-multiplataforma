@@ -1,7 +1,7 @@
 extends Node2D
 
 const DB_PATH = "user://aesdivinus_ios12_db.json"
-const BUILD_VERSION = "1.4.8-ios12"
+const BUILD_VERSION = "1.5.0-ios12"
 const DEVELOPER_NAME = "Espíritos dos jogos"
 const DEVELOPER_MOTTO = "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 const W = 1024
@@ -94,6 +94,9 @@ var player = {
 	"instincts": {"Sobrevivencia": 0, "Percepcao": 0, "Furia Controlada": 0, "Marca Divina": 0},
 	"inventory": {"Aes Divinus": 0, "Fragmento de Ferro": 0, "Relato Manchado": 0, "Racao": 1}
 }
+var turn_target_i = 0
+var turn_guard = false
+var turn_evade = false
 
 var weapon_catalog = {
 	"Espada de Gradon": {"damage": 9, "price": 0},
@@ -268,19 +271,25 @@ func _activate(action):
 		elif action == "start":
 			_new_game()
 	elif state == "game":
-		if action == "left" or action == "right" or action == "run":
-			held[action] = true
+		if action == "left":
+			_cycle_target(-1)
+		elif action == "right":
+			_cycle_target(1)
+		elif action == "run":
+			_explore_turn()
 		elif action == "attack":
-			_attack()
+			_turn_attack(false)
 		elif action == "mark":
-			_divine_mark()
+			_turn_mark()
 		elif action == "block":
-			player.block = 0.55
+			_turn_block()
 		elif action == "dodge":
-			player.dodge = 0.22
-			player.x = clamp(player.x + 120 * player.facing, 30, WORLD_W - 30)
+			_turn_dodge()
 		elif action == "interact":
-			_interact()
+			if _all_enemies_defeated():
+				_explore_turn()
+			else:
+				_turn_attack(true)
 		elif action == "pause":
 			_open_overlay("inventory")
 
@@ -575,67 +584,158 @@ func _load_map(idx):
 		npcs.append(n.duplicate(true))
 
 func _update_game(delta):
-	var dir = 0
-	if held.has("left") and held.left:
-		dir -= 1
-	if held.has("right") and held.right:
-		dir += 1
-	var speed = 215
-	if held.has("run") and held.run and player.stamina > 0:
-		speed = 305
-		player.stamina = max(0, player.stamina - 24 * delta)
-	else:
-		player.stamina = min(100, player.stamina + 18 * delta)
-	player.vx = dir * speed
-	player.x = clamp(player.x + player.vx * delta, 30, WORLD_W - 30)
-	if dir != 0:
-		player.facing = dir
-	camera_x = clamp(player.x - W * 0.45, 0, WORLD_W - W)
+	player.stamina = min(100, player.stamina + 9 * delta)
+	player.vx = 0
+	_focus_turn_camera()
 	player.attack = max(0, player.attack - delta)
 	player.block = max(0, player.block - delta)
 	player.dodge = max(0, player.dodge - delta)
-	for e in enemies:
-		if int(e.hp) <= 0:
-			continue
-		var dist = abs(float(e.x) - player.x)
-		if dist < 62 and player.dodge <= 0:
-			var dmg = 8
-			if e.type == "boss":
-				dmg = 18
-			elif e.type == "ignis":
-				dmg = 14
-			if player.block > 0:
-				dmg = int(dmg * 0.35)
-			player.hp = max(0, int(player.hp) - int(dmg * delta))
 	if int(player.hp) <= 0:
 		message = "Voce caiu. Use carregar ou novo jogo."
 		_save_game()
 		_go("title", "DERROTA")
 
-func _attack():
-	player.attack = 0.24
-	var dmg = _weapon_damage()
+func _living_enemies():
+	var out = []
 	for e in enemies:
-		if int(e.hp) > 0 and abs(float(e.x) - player.x) < _attack_range():
-			e.hp = max(0, int(e.hp) - dmg)
-			if int(e.hp) <= 0:
-				_gain_rewards(e)
-			break
+		if int(e.hp) > 0:
+			out.append(e)
+	return out
+
+func _target_enemy():
+	var living = _living_enemies()
+	if living.size() == 0:
+		return null
+	turn_target_i = clamp(turn_target_i, 0, living.size() - 1)
+	return living[turn_target_i]
+
+func _cycle_target(dir):
+	var living = _living_enemies()
+	if living.size() == 0:
+		message = "Sem inimigos. Use EXPLORAR."
+		return
+	turn_target_i = (turn_target_i + dir + living.size()) % living.size()
+	message = "Alvo: " + str(living[turn_target_i].name)
+	_focus_turn_camera()
+
+func _focus_turn_camera():
+	var target = _target_enemy()
+	if target == null:
+		camera_x = clamp(player.x - W * 0.45, 0, WORLD_W - W)
+		return
+	player.facing = -1 if float(target.x) < player.x else 1
+	camera_x = clamp(((player.x + float(target.x)) * 0.5) - W * 0.5, 0, WORLD_W - W)
+
+func _snap_to_target(e):
+	if e == null:
+		return
+	player.facing = -1 if float(e.x) < player.x else 1
+	player.x = clamp(float(e.x) - player.facing * 96, 30, WORLD_W - 30)
+	_focus_turn_camera()
+
+func _turn_attack(heavy):
+	var e = _target_enemy()
+	if e == null:
+		message = "Nada para atacar. Explore."
+		return
+	var cost = 22 if heavy else 9
+	if player.stamina < cost:
+		message = "Sem stamina. Use BLK ou item."
+		return
+	turn_guard = false
+	turn_evade = false
+	player.stamina = max(0, player.stamina - cost)
+	_snap_to_target(e)
+	_attack(heavy)
+	_enemy_turn()
+
+func _attack(heavy=false):
+	player.attack = 0.24
+	var e = _target_enemy()
+	if e == null:
+		return
+	var dmg = _weapon_damage() + (16 if heavy else 0)
+	e.hp = max(0, int(e.hp) - dmg)
+	message = character_profile.name + " causa " + str(dmg) + " em " + str(e.name)
+	if int(e.hp) <= 0:
+		_gain_rewards(e)
+
+func _turn_mark():
+	turn_guard = false
+	turn_evade = false
+	_divine_mark()
+	_enemy_turn()
 
 func _divine_mark():
 	if int(player.instinct_points) <= 0:
 		message = "Sem instinto para a Marca."
 		return
 	player.instinct_points = int(player.instinct_points) - 1
-	for e in enemies:
-		if int(e.hp) > 0 and abs(float(e.x) - player.x) < 240:
-			e.hp = max(0, int(e.hp) - 58 - int(player.skills.get("Fe", 0)) * 8)
-			message = "Marca Divina corta a corrupcao."
-			if int(e.hp) <= 0:
-				_gain_rewards(e)
-			_save_game()
-			return
-	message = "A Marca pulsa, mas nao encontra alvo."
+	var e = _target_enemy()
+	if e == null:
+		message = "A Marca pulsa, mas nao encontra alvo."
+		return
+	e.hp = max(0, int(e.hp) - 58 - int(player.skills.get("Fe", 0)) * 8)
+	message = "Marca Divina corta a corrupcao."
+	if int(e.hp) <= 0:
+		_gain_rewards(e)
+	_save_game()
+
+func _turn_block():
+	turn_guard = true
+	turn_evade = false
+	player.block = 0.55
+	player.stamina = min(100, player.stamina + 20)
+	message = "Guarda erguida. Dano reduzido."
+	_enemy_turn()
+
+func _turn_dodge():
+	if player.stamina < 12:
+		message = "Sem stamina para esquivar."
+		return
+	turn_guard = false
+	turn_evade = true
+	player.dodge = 0.28
+	player.stamina = max(0, player.stamina - 12)
+	message = "Esquiva preparada."
+	_enemy_turn()
+
+func _enemy_turn():
+	var living = _living_enemies()
+	for i in range(min(2, living.size())):
+		var e = living[i]
+		var dmg = 10
+		if e.type == "boss":
+			dmg = 24
+		elif e.type == "ignis":
+			dmg = 18
+		elif e.type == "canis":
+			dmg = 14
+		if turn_evade and randi() % 100 < 62 + int(player.skills.get("Agilidade", 0)) * 6:
+			message = str(e.name) + " erra o ataque."
+			continue
+		if turn_guard:
+			dmg = max(1, int(dmg * 0.38) - int(player.skills.get("Defesa", 0)))
+		player.hp = max(0, int(player.hp) - dmg)
+		message = str(e.name) + " causa " + str(dmg) + " de dano."
+		if int(player.hp) <= 0:
+			break
+	turn_guard = false
+	turn_evade = false
+	_focus_turn_camera()
+
+func _explore_turn():
+	if not _all_enemies_defeated():
+		message = "Inimigos bloqueiam a trilha. Vença o turno."
+		_enemy_turn()
+		return
+	_interact()
+	if message.find("Coletado:") == 0 or message.find(": ") != -1 or message.find("Novo trecho:") == 0 or message.find("Prologo") == 0:
+		return
+	player.x = clamp(player.x + 360, 30, WORLD_W - 30)
+	message = "Explorando a rota sem movimento livre."
+	_interact()
+	_focus_turn_camera()
 
 func _weapon_damage():
 	var weapon = str(player.equipment.weapon)
@@ -1001,11 +1101,11 @@ func _draw_map():
 
 func _draw_touch_controls():
 	if state == "game" and overlay == "":
-		_button("<", Rect2(42, 650, 82, 78), "left", true)
-		_button(">", Rect2(146, 650, 82, 78), "right", true)
-		_button("RUN", Rect2(90, 574, 92, 56), "run", true)
+		_button("ALV-", Rect2(42, 650, 82, 78), "left", true)
+		_button("ALV+", Rect2(146, 650, 82, 78), "right", true)
+		_button("EXP", Rect2(90, 574, 92, 56), "run", true)
 		_button("ATQ", Rect2(742, 650, 82, 78), "attack")
-		_button("BLK", Rect2(842, 650, 82, 78), "block")
+		_button("GRD", Rect2(842, 650, 82, 78), "block")
 		_button("AES", Rect2(940, 650, 82, 78), "mark")
 	elif overlay != "":
 		_button("^", Rect2(34, 520, 72, 58), "up")
