@@ -3,10 +3,11 @@ extends Node2D
 const GRAVITY := 1800.0
 const FLOOR_Y := 560.0
 const PLAYER_SIZE := Vector2(34, 56)
+const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.2"
+const BUILD_VERSION := "1.4.3"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -352,7 +353,8 @@ var game_settings := {
 	"screen_shake": true,
 	"particles_enabled": true,
 	"animated_background": true,
-	"ui_text_size": 17
+	"ui_text_size": 17,
+	"mobile_auto_configured": false
 }
 var character_models := {
 	"William": {
@@ -430,6 +432,9 @@ var character_models := {
 }
 
 var hud: CanvasLayer
+var hp_bar_bg: ColorRect
+var stamina_bar_bg: ColorRect
+var courage_bar_bg: ColorRect
 var hp_bar: ColorRect
 var stamina_bar: ColorRect
 var courage_bar: ColorRect
@@ -443,6 +448,7 @@ func _ready() -> void:
 	_ensure_runtime_input_actions()
 	_configure_mobile_orientation()
 	_db_load()
+	_apply_mobile_default_settings()
 	_normalize_player_runtime_data()
 	_build_ui()
 	_apply_runtime_settings()
@@ -467,28 +473,78 @@ func _configure_mobile_orientation() -> void:
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
 
 
+func _apply_mobile_default_settings() -> void:
+	if not OS.has_feature("android"):
+		return
+	if bool(game_settings.get("mobile_auto_configured", false)):
+		return
+	var cores := OS.get_processor_count()
+	if cores <= 4:
+		game_settings.quality_profile = "Compatibilidade"
+		game_settings.resolution_scale = 60
+		game_settings.target_fps = 30
+		game_settings.particles_enabled = false
+		game_settings.animated_background = false
+		game_settings.screen_shake = false
+	elif cores <= 6:
+		game_settings.quality_profile = "Baixo"
+		game_settings.resolution_scale = 75
+		game_settings.target_fps = 45
+		game_settings.particles_enabled = true
+		game_settings.animated_background = false
+	else:
+		game_settings.quality_profile = "Medio"
+		game_settings.resolution_scale = 90
+		game_settings.target_fps = 60
+	game_settings.mobile_auto_configured = true
+
+
+func _safe_viewport_rect() -> Rect2:
+	var viewport_rect := get_viewport_rect()
+	if not _is_touch_build():
+		return viewport_rect
+	var window_size := Vector2(DisplayServer.window_get_size())
+	var safe_area := DisplayServer.get_display_safe_area()
+	if window_size.x <= 0 or window_size.y <= 0 or safe_area.size.x <= 0 or safe_area.size.y <= 0:
+		return viewport_rect
+	var scale := Vector2(viewport_rect.size.x / window_size.x, viewport_rect.size.y / window_size.y)
+	return Rect2(Vector2(safe_area.position) * scale, Vector2(safe_area.size) * scale)
+
+
+func _stage_offset() -> Vector2:
+	var safe := _safe_viewport_rect()
+	return safe.position + Vector2(
+		maxf(0.0, (safe.size.x - BASE_VIEWPORT_SIZE.x) * 0.5),
+		maxf(0.0, (safe.size.y - BASE_VIEWPORT_SIZE.y) * 0.5)
+	)
+
+
+func _to_screen_rect(rect: Rect2) -> Rect2:
+	return Rect2(rect.position + _stage_offset(), rect.size)
+
+
 func _touch_buttons() -> Array[Dictionary]:
 	if not game_started:
 		return []
 	if paused or overlay != "" or game_over or victory:
 		return [
-			{"id": "up", "label": "^", "action": "menu_up", "rect": Rect2(78, 442, 70, 58)},
-			{"id": "down", "label": "v", "action": "menu_down", "rect": Rect2(78, 570, 70, 58)},
-			{"id": "left", "label": "<", "action": "menu_left", "rect": Rect2(8, 506, 70, 58)},
-			{"id": "right", "label": ">", "action": "menu_right", "rect": Rect2(148, 506, 70, 58)},
-			{"id": "back", "label": "Q", "action": "divine_mark", "rect": Rect2(998, 598, 86, 62)},
-			{"id": "ok", "label": "OK", "action": "interact", "rect": Rect2(1108, 588, 104, 72)}
+			{"id": "up", "label": "^", "action": "menu_up", "rect": _to_screen_rect(Rect2(78, 442, 70, 58))},
+			{"id": "down", "label": "v", "action": "menu_down", "rect": _to_screen_rect(Rect2(78, 570, 70, 58))},
+			{"id": "left", "label": "<", "action": "menu_left", "rect": _to_screen_rect(Rect2(8, 506, 70, 58))},
+			{"id": "right", "label": ">", "action": "menu_right", "rect": _to_screen_rect(Rect2(148, 506, 70, 58))},
+			{"id": "back", "label": "Q", "action": "divine_mark", "rect": _to_screen_rect(Rect2(998, 598, 86, 62))},
+			{"id": "ok", "label": "OK", "action": "interact", "rect": _to_screen_rect(Rect2(1108, 588, 104, 72))}
 		]
 	return [
-		{"id": "left", "label": "<", "action": "move_left", "rect": Rect2(34, 578, 86, 72)},
-		{"id": "right", "label": ">", "action": "move_right", "rect": Rect2(140, 578, 86, 72)},
-		{"id": "run", "label": "RUN", "action": "run", "rect": Rect2(86, 492, 92, 58)},
-		{"id": "jump", "label": "JMP", "action": "jump", "rect": Rect2(1050, 486, 86, 62)},
-		{"id": "attack", "label": "ATK", "action": "attack", "rect": Rect2(1146, 568, 92, 72)},
-		{"id": "dodge", "label": "DOD", "action": "dodge", "rect": Rect2(944, 568, 92, 72)},
-		{"id": "block", "label": "BLK", "action": "block", "rect": Rect2(1044, 568, 92, 72)},
-		{"id": "interact", "label": "E", "action": "interact", "rect": Rect2(1148, 474, 72, 62)},
-		{"id": "mark", "label": "AES", "action": "divine_mark", "rect": Rect2(942, 474, 86, 62)}
+		{"id": "left", "label": "<", "action": "move_left", "rect": _to_screen_rect(Rect2(34, 578, 86, 72))},
+		{"id": "right", "label": ">", "action": "move_right", "rect": _to_screen_rect(Rect2(140, 578, 86, 72))},
+		{"id": "run", "label": "RUN", "action": "run", "rect": _to_screen_rect(Rect2(86, 492, 92, 58))},
+		{"id": "jump", "label": "JMP", "action": "jump", "rect": _to_screen_rect(Rect2(1050, 486, 86, 62))},
+		{"id": "attack", "label": "ATK", "action": "attack", "rect": _to_screen_rect(Rect2(1146, 568, 92, 72))},
+		{"id": "dodge", "label": "DOD", "action": "dodge", "rect": _to_screen_rect(Rect2(944, 568, 92, 72))},
+		{"id": "block", "label": "BLK", "action": "block", "rect": _to_screen_rect(Rect2(1044, 568, 92, 72))},
+		{"id": "interact", "label": "E", "action": "interact", "rect": _to_screen_rect(Rect2(1148, 474, 72, 62))},
+		{"id": "mark", "label": "AES", "action": "divine_mark", "rect": _to_screen_rect(Rect2(942, 474, 86, 62))}
 	]
 
 
@@ -530,18 +586,18 @@ func _frontend_touch_rows() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	if auth_screen == "login" or auth_screen == "register":
 		for i in range(5):
-			rows.append({"index": i, "rect": Rect2(800, 82 + i * 28, 454, 30), "activate": i >= 2})
+			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "activate": i >= 2})
 	elif auth_screen == "character_create":
 		for i in range(4):
-			rows.append({"index": i, "rect": Rect2(800, 82 + i * 28, 454, 30), "activate": i > 0})
-		rows.append({"index": 4, "rect": Rect2(800, 214, 454, 42), "activate": true})
+			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "activate": i > 0})
+		rows.append({"index": 4, "rect": _to_screen_rect(Rect2(800, 214, 454, 42)), "activate": true})
 	elif auth_screen == "main_menu":
 		for i in range(main_menu_options.size()):
-			rows.append({"index": i, "rect": Rect2(800, 82 + i * 28, 454, 30), "activate": true})
+			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "activate": true})
 	elif auth_screen == "systems":
-		rows.append({"index": -1, "rect": Rect2(800, 82, 180, 56), "activate": true})
-		rows.append({"index": 1, "rect": Rect2(1040, 82, 180, 56), "activate": true})
-		rows.append({"index": 99, "rect": Rect2(800, 216, 454, 42), "activate": true})
+		rows.append({"index": -1, "rect": _to_screen_rect(Rect2(800, 82, 180, 56)), "activate": true})
+		rows.append({"index": 1, "rect": _to_screen_rect(Rect2(1040, 82, 180, 56)), "activate": true})
+		rows.append({"index": 99, "rect": _to_screen_rect(Rect2(800, 216, 454, 42)), "activate": true})
 	return rows
 
 
@@ -747,12 +803,12 @@ func _ensure_runtime_input_actions() -> void:
 func _build_ui() -> void:
 	hud = CanvasLayer.new()
 	add_child(hud)
-	var hp_bg := _bar_bg(Vector2(22, 22), Vector2(250, 16))
-	var st_bg := _bar_bg(Vector2(22, 46), Vector2(210, 12))
-	var co_bg := _bar_bg(Vector2(22, 66), Vector2(190, 10))
-	hud.add_child(hp_bg)
-	hud.add_child(st_bg)
-	hud.add_child(co_bg)
+	hp_bar_bg = _bar_bg(Vector2(22, 22), Vector2(250, 16))
+	stamina_bar_bg = _bar_bg(Vector2(22, 46), Vector2(210, 12))
+	courage_bar_bg = _bar_bg(Vector2(22, 66), Vector2(190, 10))
+	hud.add_child(hp_bar_bg)
+	hud.add_child(stamina_bar_bg)
+	hud.add_child(courage_bar_bg)
 	hp_bar = _bar(Vector2(22, 22), Vector2(250, 16), Color("#b53c3c"))
 	stamina_bar = _bar(Vector2(22, 46), Vector2(210, 12), Color("#d6b452"))
 	courage_bar = _bar(Vector2(22, 66), Vector2(190, 10), Color("#5ca8d8"))
@@ -1969,18 +2025,30 @@ func _update_particles(delta: float) -> void:
 
 
 func _update_ui() -> void:
+	var offset := _stage_offset()
+	if hp_bar_bg != null:
+		hp_bar_bg.position = offset + Vector2(22, 22)
+	if stamina_bar_bg != null:
+		stamina_bar_bg.position = offset + Vector2(22, 46)
+	if courage_bar_bg != null:
+		courage_bar_bg.position = offset + Vector2(22, 66)
+	hp_bar.position = offset + Vector2(22, 22)
+	stamina_bar.position = offset + Vector2(22, 46)
+	courage_bar.position = offset + Vector2(22, 66)
 	hp_bar.size.x = 250 * player.hp / player.max_hp
 	stamina_bar.size.x = 210 * player.stamina / 100.0
 	courage_bar.size.x = 190 * player.courage / 100.0
 	var data: Dictionary = maps[map_index]
 	title_label.text = "AESDIVINUS | %s" % auth_screen if not game_started else "%s | %s" % [data.title, player.state]
 	hint_label.text = _hint_text()
+	title_label.position = offset + Vector2(22, 88)
+	hint_label.position = offset + Vector2(22, 656)
 	if not game_started:
-		panel_label.position = Vector2(812, 34)
+		panel_label.position = offset + Vector2(812, 34)
 		panel_label.size = Vector2(424, 224)
 		panel_label.add_theme_font_size_override("font_size", 15)
 	else:
-		panel_label.position = Vector2(790, 24)
+		panel_label.position = offset + Vector2(790, 24)
 		panel_label.size = Vector2(460, 250)
 		panel_label.add_theme_font_size_override("font_size", int(game_settings.ui_text_size))
 	panel_label.text = _panel_text()
@@ -2352,15 +2420,20 @@ func _database_panel_text() -> String:
 
 
 func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#090b0c"))
+	draw_set_transform(_stage_offset(), 0.0, Vector2.ONE)
 	_draw_background()
 	if not game_started:
 		_draw_frontend_stage()
 		_draw_overlays()
+		draw_set_transform(_stage_offset(), 0.0, Vector2.ONE)
 		_draw_title_logo()
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		return
 	_draw_world()
 	_draw_player()
 	_draw_overlays()
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 func _draw_background() -> void:
@@ -2570,6 +2643,7 @@ func _draw_overlays() -> void:
 		_draw_transition()
 	if loading_active:
 		_draw_loading_screen()
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_draw_touch_controls()
 
 
