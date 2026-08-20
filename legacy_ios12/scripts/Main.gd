@@ -2,6 +2,8 @@ extends Node2D
 
 const DB_PATH = "user://aesdivinus_ios12_db.json"
 const BUILD_VERSION = "1.4.0-ios12"
+const DEVELOPER_NAME = "Espíritos dos jogos"
+const DEVELOPER_MOTTO = "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 const W = 1024
 const H = 768
 const FLOOR_Y = 610
@@ -789,9 +791,11 @@ func _draw_world():
 func _draw_intro():
 	_draw_center("AESDIVINUS", 300, Color(1.0, 0.82, 0.25), 2)
 	_draw_center("A coroa, a floresta e a marca", 350, Color(0.65, 0.95, 0.85), 1)
+	_draw_developer_brand(Vector2(512, 468), 1.0)
 
 func _draw_title():
 	_draw_logo(300, 160)
+	_draw_developer_brand(Vector2(772, 160), 1.0)
 	_draw_center("A Marca Divina contra a Homis Corruption", 262, Color(0.8, 0.9, 0.82), 1)
 	_button("Entrar", Rect2(362, 335, 300, 62), "play")
 	_button("Convidado", Rect2(362, 414, 300, 62), "guest")
@@ -963,6 +967,30 @@ func _draw_logo(x, y):
 	_draw_star(Vector2(x, y), 34)
 	_text(Vector2(x + 54, y - 8), "AESDIVINUS", Color(0.98, 0.86, 0.36), 2)
 	_text(Vector2(x + 58, y + 40), "A COROA, A FLORESTA E A MARCA", Color(0.58, 0.9, 0.82))
+
+func _draw_developer_brand(center, alpha):
+	var gold = Color(0.85, 0.70, 0.26, alpha)
+	var teal = Color(0.36, 0.92, 0.78, alpha * 0.82)
+	var cream = Color(0.96, 0.90, 0.70, alpha)
+	for side in [-1, 1]:
+		var wing = PoolVector2Array([
+			center + Vector2(10 * side, -8),
+			center + Vector2(55 * side, -36),
+			center + Vector2(94 * side, -26),
+			center + Vector2(62 * side, -2),
+			center + Vector2(90 * side, 22),
+			center + Vector2(42 * side, 18),
+			center + Vector2(15 * side, 5)
+		])
+		draw_polygon(wing, [Color(0.04, 0.36, 0.38, alpha * 0.72)])
+		for i in range(wing.size()):
+			draw_line(wing[i], wing[(i + 1) % wing.size()], gold, 2)
+		for i in range(3):
+			draw_line(center + Vector2((20 + i * 14) * side, -10 + i * 7), center + Vector2((70 + i * 8) * side, -28 + i * 21), cream, 1)
+	_draw_star(center, 16)
+	draw_arc(center, 32, 0, PI * 2, 42, teal, 2)
+	_text(center + Vector2(-82, 52), DEVELOPER_NAME, cream)
+	_text(center + Vector2(-150, 78), DEVELOPER_MOTTO, Color(0.58, 0.90, 0.82, alpha * 0.9))
 
 func _draw_character(pos, name, scale):
 	var colors = {

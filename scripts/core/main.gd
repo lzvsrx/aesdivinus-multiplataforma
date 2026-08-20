@@ -6,7 +6,9 @@ const PLAYER_SIZE := Vector2(34, 56)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.3.0"
+const BUILD_VERSION := "1.4.0"
+const DEVELOPER_NAME := "Espíritos dos jogos"
+const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
 var maps := [
 	{
@@ -2526,11 +2528,38 @@ func _draw_title_logo() -> void:
 	draw_arc(center, 72 + sin(frontend_time) * 5, 0, TAU, 56, Color(accent.r, accent.g, accent.b, alpha * 0.38), 2)
 	draw_string(ThemeDB.fallback_font, Vector2(290, 132 + (1.0 - reveal) * 16.0), "AESDIVINUS", HORIZONTAL_ALIGNMENT_LEFT, 430, 54, Color("#f6e7b1", alpha))
 	draw_string(ThemeDB.fallback_font, Vector2(296, 169 + (1.0 - reveal) * 12.0), "A COROA, A FLORESTA E A MARCA", HORIZONTAL_ALIGNMENT_LEFT, 390, 18, Color("#76d9c8", alpha))
+	_draw_developer_brand(Vector2(996, 132), alpha)
 	draw_string(ThemeDB.fallback_font, Vector2(298, 214), _screen_display_name(auth_screen), HORIZONTAL_ALIGNMENT_LEFT, 340, 20, Color(accent.r, accent.g, accent.b, 0.9 * alpha))
 	if intro_timer < intro_duration:
 		var step := clampi(int(intro_timer), 0, 4)
 		var lines := ["A floresta acorda.", "Gradon fecha seus portoes.", "A Marca encontra um herdeiro.", "Escolha sua origem.", "Entre no prologo."]
 		draw_string(ThemeDB.fallback_font, Vector2(32, 620), lines[step], HORIZONTAL_ALIGNMENT_LEFT, 420, 20, Color("#f6e7b1", 0.72 * alpha))
+
+
+func _draw_developer_brand(center: Vector2, alpha: float) -> void:
+	var gold := Color("#d8b45a", alpha)
+	var teal := Color("#6ee7cf", alpha * 0.82)
+	var cream := Color("#f6e7b1", alpha)
+	for side in [-1, 1]:
+		var wing := PackedVector2Array([
+			center + Vector2(14 * side, -8),
+			center + Vector2(72 * side, -50),
+			center + Vector2(118 * side, -38),
+			center + Vector2(82 * side, -4),
+			center + Vector2(116 * side, 26),
+			center + Vector2(54 * side, 24),
+			center + Vector2(20 * side, 8)
+		])
+		draw_polygon(wing, PackedColorArray([Color("#0b5c63", alpha * 0.72)]))
+		draw_polyline(wing, gold, 3.0, true)
+		for i in range(3):
+			var feather_start := center + Vector2((24 + i * 18) * side, -12 + i * 9)
+			var feather_end := center + Vector2((86 + i * 9) * side, -38 + i * 30)
+			draw_line(feather_start, feather_end, Color("#f6e7b1", alpha * 0.75), 2.0)
+	_draw_divine_star(center, 18.0)
+	draw_arc(center, 36.0, 0.0, TAU, 48, teal, 2.0)
+	draw_string(ThemeDB.fallback_font, center + Vector2(-130, 58), DEVELOPER_NAME, HORIZONTAL_ALIGNMENT_CENTER, 260, 19, cream)
+	draw_string(ThemeDB.fallback_font, center + Vector2(-172, 86), DEVELOPER_MOTTO, HORIZONTAL_ALIGNMENT_CENTER, 344, 13, Color("#76d9c8", alpha * 0.8))
 
 
 func _draw_divine_star(center: Vector2, radius: float) -> void:

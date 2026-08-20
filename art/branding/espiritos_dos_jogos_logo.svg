@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 768" width="1024" height="768">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e7b1"/>
+      <stop offset="0.45" stop-color="#d8b45a"/>
+      <stop offset="1" stop-color="#8f6924"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6ee7cf"/>
+      <stop offset="1" stop-color="#07464f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="768" fill="#050807"/>
+  <g transform="translate(512 292)">
+    <path d="M-34-18C-118-104-240-118-372-65c71 4 130 24 176 61-66-20-136-15-206 17 69 13 125 39 170 79-56-12-112-1-169 32 72 16 138 31 204 12 49-14 91-43 139-81Z" fill="url(#teal)" opacity=".86"/>
+    <path d="M34-18C118-104 240-118 372-65c-71 4-130 24-176 61 66-20 136-15 206 17-69 13-125 39-170 79 56-12 112-1 169 32-72 16-138 31-204 12-49-14-91-43-139-81Z" fill="url(#teal)" opacity=".86"/>
+    <path d="M-34-18C-118-104-240-118-372-65c71 4 130 24 176 61-66-20-136-15-206 17 69 13 125 39 170 79-56-12-112-1-169 32 72 16 138 31 204 12 49-14 91-43 139-81Z" fill="none" stroke="url(#gold)" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M34-18C118-104 240-118 372-65c-71 4-130 24-176 61 66-20 136-15 206 17-69 13-125 39-170 79 56-12 112-1 169 32-72 16-138 31-204 12-49-14-91-43-139-81Z" fill="none" stroke="url(#gold)" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M0-108 24-25 108 0 24 25 0 108-24 25-108 0-24-25Z" fill="url(#gold)"/>
+    <circle r="76" fill="none" stroke="#6ee7cf" stroke-width="7" opacity=".75"/>
+    <circle r="25" fill="#09110f" stroke="#f6e7b1" stroke-width="6"/>
+  </g>
+  <text x="512" y="570" text-anchor="middle" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#f6e7b1" stroke="#8f6924" stroke-width="2">Espíritos dos jogos</text>
+  <text x="512" y="626" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#6ee7cf">Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito.</text>
+</svg>
