@@ -17,7 +17,7 @@ on:
 
 jobs:
   ios-ipa:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Checkout
@@ -28,6 +28,7 @@ jobs:
       - name: Install Godot 4.7.1
         run: |
           set -euo pipefail
+          xcodebuild -version
           curl -L -o godot_macos.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.1-stable/Godot_v4.7.1-stable_macos.universal.zip"
           unzip -q godot_macos.zip -d "$HOME/godot"
           GODOT_APP="$(find "$HOME/godot" -name 'Godot*.app' -maxdepth 2 | head -n 1)"
