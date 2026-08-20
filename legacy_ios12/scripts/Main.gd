@@ -1,7 +1,7 @@
 extends Node2D
 
 const DB_PATH = "user://aesdivinus_ios12_db.json"
-const BUILD_VERSION = "1.4.5-ios12"
+const BUILD_VERSION = "1.4.6-ios12"
 const DEVELOPER_NAME = "Espíritos dos jogos"
 const DEVELOPER_MOTTO = "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 const W = 1024
@@ -19,6 +19,7 @@ var ui_font = null
 var buttons = []
 var held = {}
 var active_field = "email"
+var active_virtual_keyboard_field = ""
 
 var account = {"id": "", "email": "convidado@aesdivinus.local", "name": "Convidado", "logged_in": false, "registered": false}
 var login_password = ""
@@ -182,6 +183,7 @@ func _input(event):
 						held[b.action] = true
 					else:
 						_activate(b.action)
+					_update_virtual_keyboard_focus()
 		else:
 			held.left = false
 			held.right = false
@@ -219,6 +221,7 @@ func _go(next_state, title):
 	overlay = ""
 	transition = 0.85
 	transition_title = title
+	_update_virtual_keyboard_focus()
 
 func _activate(action):
 	if overlay != "":
@@ -362,6 +365,7 @@ func _next_field():
 			active_field = "email"
 	elif state == "create":
 		active_field = "name"
+	_update_virtual_keyboard_focus()
 
 func _type_char(ch):
 	if state == "login":
@@ -391,6 +395,50 @@ func _backspace_field():
 			register_password = register_password.substr(0, register_password.length() - 1)
 	elif state == "create" and character_profile.name.length() > 0:
 		character_profile.name = character_profile.name.substr(0, character_profile.name.length() - 1)
+
+func _update_virtual_keyboard_focus():
+	if not OS.has_feature("mobile") and not OS.has_feature("iOS") and not OS.has_feature("Android"):
+		return
+	var field = _current_text_entry_field()
+	if field == "":
+		_hide_virtual_keyboard()
+		return
+	active_virtual_keyboard_field = field
+	_show_virtual_keyboard_for_current_field()
+
+func _current_text_entry_field():
+	if state == "login" or state == "register":
+		return active_field
+	if state == "create":
+		return "character_name"
+	return ""
+
+func _show_virtual_keyboard_for_current_field():
+	if not OS.has_feature("mobile") and not OS.has_feature("iOS") and not OS.has_feature("Android"):
+		return
+	var field = _current_text_entry_field()
+	if field == "":
+		_hide_virtual_keyboard()
+		return
+	active_virtual_keyboard_field = field
+	OS.show_virtual_keyboard(_virtual_keyboard_text(field))
+
+func _hide_virtual_keyboard():
+	if active_virtual_keyboard_field == "":
+		return
+	active_virtual_keyboard_field = ""
+	OS.hide_virtual_keyboard()
+
+func _virtual_keyboard_text(field):
+	if state == "create" or field == "character_name":
+		return character_profile.name
+	if field == "email":
+		return account.email
+	if field == "name":
+		return account.name
+	if field == "password":
+		return login_password if state == "login" else register_password
+	return ""
 
 func _user_id(email):
 	return email.strip_edges().to_lower().replace("@", "_at_").replace(".", "_")

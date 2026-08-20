@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.7"
+const BUILD_VERSION := "1.4.8"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -208,6 +208,7 @@ var intro_timer := 0.0
 var intro_duration := 4.8
 var touch_points := {}
 var auth_index := 0
+var active_virtual_keyboard_field := ""
 var main_menu_index := 0
 var inventory_index := 0
 var settings_index := 0
@@ -605,6 +606,7 @@ func _select_frontend_touch_row(index: int, activate: bool) -> void:
 	match auth_screen:
 		"login":
 			auth_index = clampi(index, 0, 4)
+			_update_virtual_keyboard_focus()
 			if activate:
 				if auth_index == 2:
 					if _login_user(account.email, login_password):
@@ -621,6 +623,7 @@ func _select_frontend_touch_row(index: int, activate: bool) -> void:
 					_show_banner("Entrou como convidado.")
 		"register":
 			auth_index = clampi(index, 0, 4)
+			_update_virtual_keyboard_focus()
 			if activate:
 				if auth_index == 3:
 					if _register_user(account.name, account.email, register_password):
@@ -635,6 +638,7 @@ func _select_frontend_touch_row(index: int, activate: bool) -> void:
 		"character_create":
 			if index < 4:
 				character_field_index = clampi(index, 0, 3)
+				_update_virtual_keyboard_focus()
 				if activate:
 					_cycle_character_field(1)
 			elif character_profile.name.strip_edges().length() >= 2:
@@ -666,8 +670,13 @@ func _select_frontend_touch_row(index: int, activate: bool) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if game_started:
+		_hide_virtual_keyboard()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_TAB:
+			_cycle_editable_focus()
+			get_viewport().set_input_as_handled()
+			return
 		if auth_screen == "character_create":
 			_handle_character_name_key(event)
 		elif auth_screen in ["login", "register"]:
@@ -766,6 +775,107 @@ func _append_character_name(value: String) -> void:
 	if character_profile.name.length() >= 18:
 		return
 	character_profile.name += value
+
+
+func _cycle_editable_focus() -> void:
+	if auth_screen == "login":
+		auth_index = 1 if auth_index == 0 else 0
+	elif auth_screen == "register":
+		auth_index = wrapi(auth_index + 1, 0, 3)
+	elif auth_screen == "character_create":
+		character_field_index = 0
+	_update_virtual_keyboard_focus()
+
+
+func _update_virtual_keyboard_focus() -> void:
+	if not _is_touch_build():
+		return
+	var field := _current_text_entry_field()
+	if field == "":
+		_hide_virtual_keyboard()
+		return
+	active_virtual_keyboard_field = field
+	_show_virtual_keyboard_for_current_field()
+
+
+func _current_text_entry_field() -> String:
+	if auth_screen == "login" or auth_screen == "register":
+		return _auth_editable_field()
+	if auth_screen == "character_create" and character_field_index == 0:
+		return "character_name"
+	return ""
+
+
+func _show_virtual_keyboard_for_current_field() -> void:
+	if not _is_touch_build():
+		return
+	var field := _current_text_entry_field()
+	if field == "":
+		_hide_virtual_keyboard()
+		return
+	active_virtual_keyboard_field = field
+	var text := _get_virtual_keyboard_text(field)
+	var cursor := text.length()
+	DisplayServer.virtual_keyboard_show(text, _virtual_keyboard_rect(field), _virtual_keyboard_type(field), _virtual_keyboard_max_length(field), cursor, cursor)
+
+
+func _hide_virtual_keyboard() -> void:
+	if active_virtual_keyboard_field == "":
+		return
+	active_virtual_keyboard_field = ""
+	DisplayServer.virtual_keyboard_hide()
+
+
+func _get_virtual_keyboard_text(field: String) -> String:
+	match field:
+		"name":
+			return account.name
+		"email":
+			return account.email
+		"login_password":
+			return login_password
+		"register_password":
+			return register_password
+		"character_name":
+			return character_profile.name
+	return ""
+
+
+func _virtual_keyboard_type(field: String) -> int:
+	match field:
+		"email":
+			return DisplayServer.KEYBOARD_TYPE_EMAIL_ADDRESS
+		"login_password", "register_password":
+			return DisplayServer.KEYBOARD_TYPE_PASSWORD
+	return DisplayServer.KEYBOARD_TYPE_DEFAULT
+
+
+func _virtual_keyboard_max_length(field: String) -> int:
+	match field:
+		"email":
+			return 36
+		"login_password", "register_password":
+			return 20
+		"character_name":
+			return 18
+	return 36
+
+
+func _virtual_keyboard_rect(field: String) -> Rect2:
+	var y := 86.0
+	if auth_screen == "login":
+		y = 82.0 if field == "email" else 110.0
+	elif auth_screen == "register":
+		match field:
+			"name":
+				y = 110.0
+			"email":
+				y = 82.0
+			"register_password":
+				y = 138.0
+	elif field == "character_name":
+		y = 82.0
+	return _to_screen_rect(Rect2(800, y, 454, 30))
 
 
 func _ensure_runtime_input_actions() -> void:
@@ -1111,6 +1221,7 @@ func _set_auth_screen(name: String) -> void:
 		return
 	last_auth_screen = auth_screen
 	auth_screen = name
+	_update_virtual_keyboard_focus()
 	_start_transition(_screen_display_name(name), last_auth_screen, name)
 
 
