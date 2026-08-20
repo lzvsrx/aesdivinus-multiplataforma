@@ -1,7 +1,7 @@
 extends Node2D
 
 const DB_PATH = "user://aesdivinus_ios12_db.json"
-const BUILD_VERSION = "1.4.7-ios12"
+const BUILD_VERSION = "1.4.8-ios12"
 const DEVELOPER_NAME = "Espíritos dos jogos"
 const DEVELOPER_MOTTO = "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 const W = 1024

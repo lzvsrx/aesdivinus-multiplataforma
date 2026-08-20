@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.5.0"
+const BUILD_VERSION := "1.5.1"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -587,18 +587,28 @@ func _frontend_touch_rows() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	if auth_screen == "login" or auth_screen == "register":
 		for i in range(5):
-			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "activate": i >= 2})
+			rows.append({
+				"index": i,
+				"rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)),
+				"visual_rect": _to_screen_rect(Rect2(1064, 84 + i * 28, 166, 22)),
+				"activate": i >= 2
+			})
 	elif auth_screen == "character_create":
 		for i in range(4):
-			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "activate": i > 0})
-		rows.append({"index": 4, "rect": _to_screen_rect(Rect2(800, 214, 454, 42)), "activate": true})
+			rows.append({
+				"index": i,
+				"rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)),
+				"visual_rect": _to_screen_rect(Rect2(1048, 84 + i * 28, 182, 22)),
+				"activate": i > 0
+			})
+		rows.append({"index": 4, "rect": _to_screen_rect(Rect2(800, 214, 454, 42)), "visual_rect": _to_screen_rect(Rect2(1018, 216, 212, 34)), "activate": true})
 	elif auth_screen == "main_menu":
 		for i in range(main_menu_options.size()):
-			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "activate": true})
+			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "visual_rect": _to_screen_rect(Rect2(980, 84 + i * 28, 250, 22)), "activate": true})
 	elif auth_screen == "systems":
-		rows.append({"index": -1, "rect": _to_screen_rect(Rect2(800, 82, 180, 56)), "activate": true})
-		rows.append({"index": 1, "rect": _to_screen_rect(Rect2(1040, 82, 180, 56)), "activate": true})
-		rows.append({"index": 99, "rect": _to_screen_rect(Rect2(800, 216, 454, 42)), "activate": true})
+		rows.append({"index": -1, "rect": _to_screen_rect(Rect2(800, 82, 180, 56)), "visual_rect": _to_screen_rect(Rect2(802, 92, 134, 32)), "activate": true})
+		rows.append({"index": 1, "rect": _to_screen_rect(Rect2(1040, 82, 180, 56)), "visual_rect": _to_screen_rect(Rect2(1088, 92, 134, 32)), "activate": true})
+		rows.append({"index": 99, "rect": _to_screen_rect(Rect2(800, 216, 454, 42)), "visual_rect": _to_screen_rect(Rect2(1018, 216, 212, 34)), "activate": true})
 	return rows
 
 
@@ -2837,7 +2847,8 @@ func _draw_oct_button(rect: Rect2, label: String, id: String, pressed: bool, fil
 	draw_polygon(inner_points, PackedColorArray([bg]))
 	draw_polyline(inner_points + PackedVector2Array([inner_points[0]]), border, 2.5)
 	var icon_color := Color("#f6e7b1")
-	_draw_touch_icon(id, rect.get_center() + Vector2(0, -4), minf(rect.size.x, rect.size.y) * 0.34, icon_color)
+	if id != "menu":
+		_draw_touch_icon(id, rect.get_center() + Vector2(0, -4), minf(rect.size.x, rect.size.y) * 0.34, icon_color)
 	_draw_button_caption(rect, label, 14 if label.length() < 4 else 12, icon_color)
 
 
@@ -2872,6 +2883,10 @@ func _draw_touch_icon(id: String, center: Vector2, radius: float, color: Color) 
 
 
 func _draw_button_caption(rect: Rect2, label: String, font_size: int, color: Color) -> void:
+	if rect.size.y <= 36:
+		font_size = mini(font_size, 11)
+		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y * 0.63 + font_size * 0.22), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, color)
+		return
 	draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y - 12), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, color)
 
 
@@ -2895,8 +2910,9 @@ func _oct_points(rect: Rect2, cut: float) -> PackedVector2Array:
 func _draw_frontend_touch_targets() -> void:
 	if not _is_touch_build():
 		return
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	for row in _frontend_touch_rows():
-		var rect: Rect2 = row.rect
+		var rect: Rect2 = row.get("visual_rect", row.rect)
 		var index := int(row.index)
 		var selected := _frontend_touch_row_selected(index)
 		var label := _frontend_touch_row_label(index)
@@ -2906,7 +2922,8 @@ func _draw_frontend_touch_targets() -> void:
 		if not actionable:
 			fill = Color("#0b1110", 0.36)
 			rim = Color("#76d9c8", 0.34)
-		_draw_oct_button(_expand_rect(rect, Vector2(2, 4)), label, "menu", selected, fill, rim)
+		_draw_oct_button(_expand_rect(rect, Vector2(1, 2)), label, "menu", selected, fill, rim)
+	draw_set_transform(_stage_offset(), 0.0, Vector2.ONE)
 
 
 func _frontend_touch_row_selected(index: int) -> bool:
