@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.6.0"
+const BUILD_VERSION := "1.6.3"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -1928,7 +1928,7 @@ func _focus_turn_camera() -> void:
 	player.facing = signi(enemy_pos.x - player.pos.x)
 	if player.facing == 0:
 		player.facing = 1
-	var mid := (player.pos.x + enemy_pos.x) * 0.5
+	var mid: float = (float(player.pos.x) + float(enemy_pos.x)) * 0.5
 	camera_x = clampf(mid - 640, 0, WORLD_W - 1280)
 
 
@@ -2463,6 +2463,9 @@ func _update_ui() -> void:
 	if not game_started:
 		panel_label.position = offset + Vector2(812, 34)
 		panel_label.size = Vector2(424, 224)
+		if _is_touch_build() and auth_screen in ["login", "register"]:
+			panel_label.position = offset + Vector2(812, 92)
+			panel_label.size = Vector2(336, 174)
 		panel_label.add_theme_font_size_override("font_size", 15)
 	else:
 		panel_label.position = offset + Vector2(790, 24)
@@ -2550,7 +2553,7 @@ func _panel_text() -> String:
 func _frontend_panel_text() -> String:
 	if auth_screen == "login":
 		if _is_touch_build():
-			return "PORTAO DE GRADON\n\nConta: %s\nStatus: %s\n\nToque nos campos para digitar e nas acoes para entrar." % [account.email, auth_message]
+			return "Status:\nPronto"
 		var options := [
 			"Email: %s" % account.email,
 			"Senha: %s" % _mask_text(login_password),
@@ -2565,7 +2568,7 @@ func _frontend_panel_text() -> String:
 		]
 	if auth_screen == "register":
 		if _is_touch_build():
-			return "JURAMENTO\n\nBanco local: user://aesdivinus_db.json\nStatus: %s\n\nToque nos campos, crie usuario e siga para o personagem." % auth_message
+			return "Cadastro\nlocal"
 		var options := [
 			"Nome: %s" % account.name,
 			"Email: %s" % account.email,
