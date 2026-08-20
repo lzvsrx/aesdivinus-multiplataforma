@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.6"
+const BUILD_VERSION := "1.4.7"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -536,15 +536,15 @@ func _touch_buttons() -> Array[Dictionary]:
 			{"id": "ok", "label": "OK", "action": "interact", "rect": _to_screen_rect(Rect2(1108, 588, 104, 72))}
 		]
 	return [
-		{"id": "left", "label": "<", "action": "move_left", "rect": _to_screen_rect(Rect2(34, 578, 86, 72))},
-		{"id": "right", "label": ">", "action": "move_right", "rect": _to_screen_rect(Rect2(140, 578, 86, 72))},
-		{"id": "run", "label": "RUN", "action": "run", "rect": _to_screen_rect(Rect2(86, 492, 92, 58))},
-		{"id": "jump", "label": "JMP", "action": "jump", "rect": _to_screen_rect(Rect2(1050, 486, 86, 62))},
-		{"id": "attack", "label": "ATK", "action": "attack", "rect": _to_screen_rect(Rect2(1146, 568, 92, 72))},
-		{"id": "dodge", "label": "DOD", "action": "dodge", "rect": _to_screen_rect(Rect2(944, 568, 92, 72))},
-		{"id": "block", "label": "BLK", "action": "block", "rect": _to_screen_rect(Rect2(1044, 568, 92, 72))},
-		{"id": "interact", "label": "E", "action": "interact", "rect": _to_screen_rect(Rect2(1148, 474, 72, 62))},
-		{"id": "mark", "label": "AES", "action": "divine_mark", "rect": _to_screen_rect(Rect2(942, 474, 86, 62))}
+		{"id": "left", "label": "<", "action": "move_left", "rect": _to_screen_rect(Rect2(34, 602, 94, 72))},
+		{"id": "right", "label": ">", "action": "move_right", "rect": _to_screen_rect(Rect2(148, 602, 94, 72))},
+		{"id": "run", "label": "CORRER", "action": "run", "rect": _to_screen_rect(Rect2(86, 520, 112, 60))},
+		{"id": "mark", "label": "MARCA", "action": "divine_mark", "rect": _to_screen_rect(Rect2(914, 522, 104, 58))},
+		{"id": "jump", "label": "PULAR", "action": "jump", "rect": _to_screen_rect(Rect2(1032, 510, 106, 70))},
+		{"id": "interact", "label": "ACAO", "action": "interact", "rect": _to_screen_rect(Rect2(1152, 510, 92, 70))},
+		{"id": "dodge", "label": "ESQUIVA", "action": "dodge", "rect": _to_screen_rect(Rect2(900, 604, 104, 66))},
+		{"id": "block", "label": "BLOQ.", "action": "block", "rect": _to_screen_rect(Rect2(1018, 604, 104, 66))},
+		{"id": "attack", "label": "ATACAR", "action": "attack", "rect": _to_screen_rect(Rect2(1136, 594, 108, 76))}
 	]
 
 
@@ -2049,7 +2049,8 @@ func _update_ui() -> void:
 	title_label.text = "AESDIVINUS | %s" % auth_screen if not game_started else "%s | %s" % [data.title, player.state]
 	hint_label.text = _hint_text()
 	title_label.position = offset + Vector2(22, 88)
-	hint_label.position = offset + Vector2(22, 656)
+	hint_label.visible = not (_is_touch_build() and game_started and overlay == "" and not game_over and not victory)
+	hint_label.position = offset + (Vector2(22, 656) if hint_label.visible else Vector2(22, 696))
 	if not game_started:
 		panel_label.position = offset + Vector2(812, 34)
 		panel_label.size = Vector2(424, 224)
@@ -2666,13 +2667,25 @@ func _draw_touch_controls() -> void:
 	for button in _touch_buttons():
 		var rect: Rect2 = button.rect
 		var action := String(button.action)
+		var label := String(button.label)
 		var pressed := Input.is_action_pressed(action)
 		var color := Color("#d8b45a", 0.34 if pressed else 0.20)
 		var border := Color("#f6e7b1", 0.82 if pressed else 0.48)
-		draw_rect(rect, Color("#050605", 0.48))
+		var is_action_button := not (action in ["move_left", "move_right", "menu_left", "menu_right", "menu_up", "menu_down"])
+		if action == "attack":
+			color = Color("#d8b45a", 0.46 if pressed else 0.27)
+			border = Color("#fff0a8", 0.95 if pressed else 0.62)
+		draw_rect(rect, Color("#050605", 0.58))
 		draw_rect(rect, color)
 		draw_rect(rect, border, false, 2)
-		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y * 0.62), String(button.label), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 18, Color("#f6e7b1"))
+		if is_action_button:
+			draw_rect(rect.grow(-5), Color("#f6e7b1", 0.10 if pressed else 0.04), false, 1)
+		var font_size := 20
+		if label.length() >= 6:
+			font_size = 13
+		elif label.length() >= 4:
+			font_size = 15
+		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y * 0.58 + font_size * 0.28), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, Color("#f6e7b1"))
 
 
 func _draw_loading_screen() -> void:
