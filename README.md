@@ -188,6 +188,12 @@ O arquivo esperado para o Sideloadly e:
 builds\ios12-legacy\AESDIVINUS_iOS12_Legacy_unsigned.ipa
 ```
 
+Abrir o Sideloadly ja apontando para o IPA legacy correto:
+
+```powershell
+.\install_ios12_legacy_sideloadly.ps1
+```
+
 Todas as plataformas:
 
 ```powershell
