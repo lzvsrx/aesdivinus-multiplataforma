@@ -158,6 +158,12 @@ No macOS:
 AESDIVINUS_APPLE_TEAM_ID=SEUTEAMID1 ./export_ios_ipad_air.command
 ```
 
+Instalar direto no iPad Air conectado a um Mac:
+
+```bash
+AESDIVINUS_APPLE_TEAM_ID=SEUTEAMID1 AESDIVINUS_IOS_DEVICE_ID=UDID_DO_IPAD ./install_ios_ipad_air.command
+```
+
 Todas as plataformas:
 
 ```powershell

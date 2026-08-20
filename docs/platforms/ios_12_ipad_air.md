@@ -26,3 +26,15 @@ AESDIVINUS_APPLE_TEAM_ID=ABCDE12XYZ ./export_ios_ipad_air.command
 ```
 
 Depois abra o projeto exportado no Xcode, conecte o iPad Air, selecione o dispositivo e rode o build. Para teste local, uma conta Apple gratuita pode assinar apps de desenvolvimento; para distribuicao, use conta Apple Developer.
+
+## Instalar no iPad Air
+
+No Mac, instale o `ios-deploy`, conecte o iPad por USB, confie no computador no iPad e rode:
+
+```bash
+brew install ios-deploy
+ios-deploy -c
+AESDIVINUS_APPLE_TEAM_ID=ABCDE12XYZ AESDIVINUS_IOS_DEVICE_ID=UDID_DO_IPAD ./install_ios_ipad_air.command
+```
+
+O script exporta o projeto iOS, compila com Xcode, assina com o Team ID informado e instala o `.app` no iPad Air.
