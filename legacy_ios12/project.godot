@@ -20,4 +20,5 @@ window/handheld/orientation="landscape"
 quality/driver/driver_name="GLES2"
 quality/intended_usage/framebuffer_allocation=0
 quality/2d/use_pixel_snap=true
+vram_compression/import_pvrtc=true
 environment/default_clear_color=Color(0.025, 0.023, 0.035, 1)
