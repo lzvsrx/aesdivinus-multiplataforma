@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="128" viewBox="0 0 256 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10110f"/>
+      <stop offset="0.52" stop-color="#171b1c"/>
+      <stop offset="1" stop-color="#0d0b10"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0a8"/>
+      <stop offset="0.45" stop-color="#d8b45a"/>
+      <stop offset="1" stop-color="#8f6b28"/>
+    </linearGradient>
+    <filter id="soft-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="256" height="128" rx="10" fill="url(#bg)"/>
+  <path d="M0 96 C30 77 49 92 75 72 C105 49 133 70 159 49 C193 21 221 34 256 18 L256 128 L0 128Z" fill="#1d2a24"/>
+  <path d="M0 105 C36 88 59 104 88 82 C119 58 143 82 178 59 C207 40 226 48 256 36 L256 128 L0 128Z" fill="#26372d"/>
+  <g opacity="0.8">
+    <rect x="34" y="43" width="7" height="63" fill="#242019"/>
+    <rect x="53" y="32" width="8" height="74" fill="#242019"/>
+    <rect x="218" y="37" width="7" height="68" fill="#242019"/>
+    <path d="M37 25 l-18 32 h36Z" fill="#324432"/>
+    <path d="M57 13 l-22 42 h44Z" fill="#324432"/>
+    <path d="M222 19 l-21 39 h42Z" fill="#324432"/>
+  </g>
+  <g transform="translate(18 14)" filter="url(#soft-glow)">
+    <path d="M48 0 58 30 90 32 64 51 73 82 48 64 23 82 32 51 6 32 38 30Z" fill="url(#gold)"/>
+    <path d="M48 15 54 35 75 37 58 49 64 69 48 57 32 69 38 49 21 37 42 35Z" fill="#11130f"/>
+    <path d="M47 19 h4 v48 h-4Z" fill="#d8d8cc"/>
+    <path d="M35 41 h28 v5 H35Z" fill="#d8d8cc"/>
+    <path d="M49 5 53 31 49 38 45 31Z" fill="#fff0a8"/>
+  </g>
+  <text x="104" y="59" font-family="Verdana, Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="1" fill="#f6e7b1">AESDIVINUS</text>
+  <text x="106" y="82" font-family="Verdana, Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="2" fill="#76d9c8">2D PIXEL ACTION RPG</text>
+  <rect x="4" y="4" width="248" height="120" rx="8" fill="none" stroke="#d8b45a" stroke-width="2" opacity="0.72"/>
+</svg>

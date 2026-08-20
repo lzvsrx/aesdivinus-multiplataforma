@@ -1,0 +1,95 @@
+{
+  "canvas": {
+    "frame_width": 64,
+    "frame_height": 64,
+    "pivot": { "x": 32, "y": 56 },
+    "direction": "right",
+    "background": "transparent"
+  },
+  "layers": [
+    "shadow",
+    "body",
+    "head",
+    "hair",
+    "clothes",
+    "armor_or_cloak",
+    "weapon",
+    "divine_mark_fx",
+    "hit_flash"
+  ],
+  "tags": {
+    "idle": 6,
+    "walk": 8,
+    "run": 8,
+    "jump": 4,
+    "fall": 4,
+    "land": 3,
+    "attack_1": 5,
+    "attack_2": 5,
+    "attack_3": 6,
+    "heavy_attack": 7,
+    "air_attack": 5,
+    "dodge": 5,
+    "block": 4,
+    "hurt": 4,
+    "death": 8,
+    "interact": 4,
+    "special": 8
+  },
+  "characters": {
+    "william": {
+      "display_name": "William",
+      "role": "protagonista / cavaleiro",
+      "silhouette": "knight",
+      "weapon": "sword",
+      "palette": ["#395b7c", "#233b54", "#d2b48c", "#2b2119", "#d8b45a"],
+      "aseprite_file": "art/characters/william/william.aseprite",
+      "status": "needs_aseprite_file"
+    },
+    "ethan": {
+      "display_name": "Ethan",
+      "role": "companheiro agil / batedor",
+      "silhouette": "scout",
+      "weapon": "short_sword",
+      "palette": ["#4f73a6", "#2d4c73", "#c7b18a", "#6a4a2f", "#7bd0c2"],
+      "aseprite_file": "art/characters/ethan/ethan.aseprite",
+      "status": "needs_aseprite_file"
+    },
+    "donovan": {
+      "display_name": "Donovan",
+      "role": "veterano / defensor pesado",
+      "silhouette": "heavy",
+      "weapon": "axe",
+      "palette": ["#5d5d64", "#37373d", "#bca17e", "#2a2928", "#9b7c43"],
+      "aseprite_file": "art/characters/donovan/donovan.aseprite",
+      "status": "needs_aseprite_file"
+    },
+    "albert": {
+      "display_name": "Albert",
+      "role": "nobre / estrategista",
+      "silhouette": "noble",
+      "weapon": "rapier",
+      "palette": ["#6d4f8c", "#3f2c58", "#d0b091", "#d8c17a", "#e8d98b"],
+      "aseprite_file": "art/characters/albert/albert.aseprite",
+      "status": "needs_aseprite_file"
+    },
+    "hilda": {
+      "display_name": "Hilda",
+      "role": "guerreira agil / suporte",
+      "silhouette": "agile",
+      "weapon": "spear",
+      "palette": ["#7b3f61", "#3f263a", "#c99676", "#1d1b1f", "#d96d8b"],
+      "aseprite_file": "art/characters/hilda/hilda.aseprite",
+      "status": "needs_aseprite_file"
+    },
+    "elric": {
+      "display_name": "Elric",
+      "role": "marcado divino / mistico",
+      "silhouette": "mystic",
+      "weapon": "staff",
+      "palette": ["#355f5a", "#1f3938", "#cab79d", "#e6e6d7", "#6ee7cf"],
+      "aseprite_file": "art/characters/elric/elric.aseprite",
+      "status": "needs_aseprite_file"
+    }
+  }
+}
