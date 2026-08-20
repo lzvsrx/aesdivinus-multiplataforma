@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.3"
+const BUILD_VERSION := "1.4.4"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -2026,15 +2026,22 @@ func _update_particles(delta: float) -> void:
 
 func _update_ui() -> void:
 	var offset := _stage_offset()
+	var gameplay_hud_visible := game_started
 	if hp_bar_bg != null:
 		hp_bar_bg.position = offset + Vector2(22, 22)
+		hp_bar_bg.visible = gameplay_hud_visible
 	if stamina_bar_bg != null:
 		stamina_bar_bg.position = offset + Vector2(22, 46)
+		stamina_bar_bg.visible = gameplay_hud_visible
 	if courage_bar_bg != null:
 		courage_bar_bg.position = offset + Vector2(22, 66)
+		courage_bar_bg.visible = gameplay_hud_visible
 	hp_bar.position = offset + Vector2(22, 22)
 	stamina_bar.position = offset + Vector2(22, 46)
 	courage_bar.position = offset + Vector2(22, 66)
+	hp_bar.visible = gameplay_hud_visible
+	stamina_bar.visible = gameplay_hud_visible
+	courage_bar.visible = gameplay_hud_visible
 	hp_bar.size.x = 250 * player.hp / player.max_hp
 	stamina_bar.size.x = 210 * player.stamina / 100.0
 	courage_bar.size.x = 190 * player.courage / 100.0
@@ -2056,6 +2063,12 @@ func _update_ui() -> void:
 
 func _hint_text() -> String:
 	if not game_started:
+		if _is_touch_build():
+			if auth_screen == "character_create":
+				return "Toque em personagem, classe ou origem | toque no painel para confirmar"
+			if auth_screen == "systems":
+				return "Toque nas laterais do painel para trocar | toque em voltar"
+			return "Toque diretamente nas opcoes do painel"
 		if auth_screen == "character_create":
 			return "A/D classe | Q origem | E confirmar"
 		if auth_screen == "systems":
@@ -2648,7 +2661,7 @@ func _draw_overlays() -> void:
 
 
 func _draw_touch_controls() -> void:
-	if not _is_touch_build():
+	if not _is_touch_build() or not game_started:
 		return
 	for button in _touch_buttons():
 		var rect: Rect2 = button.rect
