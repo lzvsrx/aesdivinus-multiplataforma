@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.9"
+const BUILD_VERSION := "1.5.0"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -2759,6 +2759,8 @@ func _draw_overlays() -> void:
 		draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0, 0, 0, 0.35))
 	if paused or victory or not game_started:
 		_draw_screen_panel(Rect2(772, 14, 492, 272), overlay if game_started else auth_screen)
+	if not game_started:
+		_draw_frontend_touch_targets()
 	if boss_mode:
 		draw_rect(Rect2(420, 62, 440, 12), Color("#201d19"))
 		var boss := enemies.filter(func(e): return e.type == "boss" and not e.dead)
@@ -2776,27 +2778,165 @@ func _draw_touch_controls() -> void:
 	if not _is_touch_build() or not game_started:
 		return
 	for button in _touch_buttons():
-		var rect: Rect2 = button.rect
-		var action := String(button.action)
-		var label := String(button.label)
-		var pressed := Input.is_action_pressed(action)
-		var color := Color("#d8b45a", 0.34 if pressed else 0.20)
-		var border := Color("#f6e7b1", 0.82 if pressed else 0.48)
-		var is_action_button := not (action in ["move_left", "move_right", "menu_left", "menu_right", "menu_up", "menu_down"])
-		if action == "attack":
-			color = Color("#d8b45a", 0.46 if pressed else 0.27)
-			border = Color("#fff0a8", 0.95 if pressed else 0.62)
-		draw_rect(rect, Color("#050605", 0.58))
-		draw_rect(rect, color)
-		draw_rect(rect, border, false, 2)
-		if is_action_button:
-			draw_rect(rect.grow(-5), Color("#f6e7b1", 0.10 if pressed else 0.04), false, 1)
-		var font_size := 20
-		if label.length() >= 6:
-			font_size = 13
-		elif label.length() >= 4:
-			font_size = 15
-		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y * 0.58 + font_size * 0.28), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, Color("#f6e7b1"))
+		_draw_touch_button(button)
+
+
+func _draw_touch_button(button: Dictionary) -> void:
+	var rect: Rect2 = button.rect
+	var action := String(button.action)
+	var label := String(button.label)
+	var id := String(button.id)
+	var pressed := Input.is_action_pressed(action)
+	var center := rect.get_center()
+	var is_direction := action in ["move_left", "move_right", "menu_left", "menu_right", "menu_up", "menu_down"]
+	var is_menu := action in ["interact", "divine_mark"] and (paused or overlay != "" or game_over or victory)
+	if is_direction:
+		_draw_oct_button(rect, label, id, pressed)
+	elif is_menu:
+		_draw_oct_button(rect, label, id, pressed, Color("#24362f"), Color("#d8b45a"))
+	else:
+		var radius := minf(rect.size.x, rect.size.y) * (0.48 if id == "attack" else 0.43)
+		var fill := Color("#17241f", 0.72)
+		var rim := Color("#d8b45a", 0.78)
+		match id:
+			"attack":
+				fill = Color("#4a2619", 0.82)
+				rim = Color("#f0c35e", 0.96)
+			"block":
+				fill = Color("#172432", 0.76)
+				rim = Color("#9fd6ff", 0.82)
+			"dodge":
+				fill = Color("#17342f", 0.74)
+				rim = Color("#76d9c8", 0.82)
+			"mark":
+				fill = Color("#1c1b13", 0.78)
+				rim = Color("#d8b45a", 0.92)
+			"jump":
+				fill = Color("#24230f", 0.74)
+			"interact":
+				fill = Color("#1d261d", 0.74)
+		if pressed:
+			radius *= 0.94
+			fill = fill.lightened(0.12)
+		draw_circle(center + Vector2(0, 3), radius + 8, Color("#020302", 0.46))
+		draw_circle(center, radius + 5, Color("#050605", 0.68))
+		draw_circle(center, radius, fill)
+		draw_arc(center, radius + 3, 0, TAU, 56, rim, 3.2)
+		draw_arc(center, radius - 8, -PI * 0.25, TAU * 0.72, 42, Color("#f6e7b1", 0.18 if not pressed else 0.32), 2.0)
+		_draw_touch_icon(id, center + Vector2(0, -5), radius, Color("#f6e7b1"))
+		_draw_button_caption(rect, label, 13 if label.length() >= 6 else 14, Color("#f6e7b1"))
+
+
+func _draw_oct_button(rect: Rect2, label: String, id: String, pressed: bool, fill := Color("#171b17"), rim := Color("#d8b45a")) -> void:
+	var bg := Color(fill.r, fill.g, fill.b, 0.66 if pressed else 0.50)
+	var border := Color(rim.r, rim.g, rim.b, 0.92 if pressed else 0.62)
+	var points := _oct_points(rect, minf(rect.size.x, rect.size.y) * 0.18)
+	var inner_points := _oct_points(rect.grow(-4), minf(rect.size.x, rect.size.y) * 0.16)
+	draw_polygon(points, PackedColorArray([Color("#020302", 0.48)]))
+	draw_polyline(points + PackedVector2Array([points[0]]), Color("#020302", 0.72), 6)
+	draw_polygon(inner_points, PackedColorArray([bg]))
+	draw_polyline(inner_points + PackedVector2Array([inner_points[0]]), border, 2.5)
+	var icon_color := Color("#f6e7b1")
+	_draw_touch_icon(id, rect.get_center() + Vector2(0, -4), minf(rect.size.x, rect.size.y) * 0.34, icon_color)
+	_draw_button_caption(rect, label, 14 if label.length() < 4 else 12, icon_color)
+
+
+func _draw_touch_icon(id: String, center: Vector2, radius: float, color: Color) -> void:
+	var w := maxf(2.0, radius * 0.10)
+	match id:
+		"left":
+			draw_polygon(PackedVector2Array([center + Vector2(-radius * 0.42, 0), center + Vector2(radius * 0.20, -radius * 0.36), center + Vector2(radius * 0.20, radius * 0.36)]), PackedColorArray([color]))
+		"right":
+			draw_polygon(PackedVector2Array([center + Vector2(radius * 0.42, 0), center + Vector2(-radius * 0.20, -radius * 0.36), center + Vector2(-radius * 0.20, radius * 0.36)]), PackedColorArray([color]))
+		"up", "jump":
+			draw_polygon(PackedVector2Array([center + Vector2(0, -radius * 0.46), center + Vector2(radius * 0.36, radius * 0.14), center + Vector2(radius * 0.10, radius * 0.14), center + Vector2(radius * 0.10, radius * 0.44), center + Vector2(-radius * 0.10, radius * 0.44), center + Vector2(-radius * 0.10, radius * 0.14), center + Vector2(-radius * 0.36, radius * 0.14)]), PackedColorArray([color]))
+		"down":
+			draw_polygon(PackedVector2Array([center + Vector2(0, radius * 0.46), center + Vector2(radius * 0.36, -radius * 0.14), center + Vector2(radius * 0.10, -radius * 0.14), center + Vector2(radius * 0.10, -radius * 0.44), center + Vector2(-radius * 0.10, -radius * 0.44), center + Vector2(-radius * 0.10, -radius * 0.14), center + Vector2(-radius * 0.36, -radius * 0.14)]), PackedColorArray([color]))
+		"attack":
+			draw_line(center + Vector2(-radius * 0.34, radius * 0.34), center + Vector2(radius * 0.36, -radius * 0.36), color, w * 2.0)
+			draw_polygon(PackedVector2Array([center + Vector2(radius * 0.42, -radius * 0.42), center + Vector2(radius * 0.24, -radius * 0.04), center + Vector2(radius * 0.04, -radius * 0.24)]), PackedColorArray([color]))
+			draw_line(center + Vector2(-radius * 0.42, radius * 0.18), center + Vector2(-radius * 0.18, radius * 0.42), Color("#d8b45a"), w)
+		"block":
+			draw_polygon(PackedVector2Array([center + Vector2(0, -radius * 0.46), center + Vector2(radius * 0.36, -radius * 0.22), center + Vector2(radius * 0.30, radius * 0.24), center + Vector2(0, radius * 0.48), center + Vector2(-radius * 0.30, radius * 0.24), center + Vector2(-radius * 0.36, -radius * 0.22)]), PackedColorArray([Color(color.r, color.g, color.b, 0.88)]))
+			draw_polyline(PackedVector2Array([center + Vector2(0, -radius * 0.46), center + Vector2(radius * 0.36, -radius * 0.22), center + Vector2(radius * 0.30, radius * 0.24), center + Vector2(0, radius * 0.48), center + Vector2(-radius * 0.30, radius * 0.24), center + Vector2(-radius * 0.36, -radius * 0.22), center + Vector2(0, -radius * 0.46)]), Color("#172432"), w)
+		"dodge":
+			draw_arc(center, radius * 0.38, PI * 0.20, PI * 1.55, 28, color, w)
+			draw_polygon(PackedVector2Array([center + Vector2(-radius * 0.42, radius * 0.18), center + Vector2(-radius * 0.12, radius * 0.06), center + Vector2(-radius * 0.25, radius * 0.36)]), PackedColorArray([color]))
+		"mark":
+			_draw_divine_star(center, radius * 0.34)
+		"interact":
+			draw_circle(center, radius * 0.18, color)
+			draw_arc(center, radius * 0.42, -PI * 0.15, PI * 1.15, 28, color, w)
+		_:
+			draw_string(ThemeDB.fallback_font, center - Vector2(radius * 0.5, -radius * 0.12), id.to_upper().left(2), HORIZONTAL_ALIGNMENT_CENTER, radius, int(radius * 0.42), color)
+
+
+func _draw_button_caption(rect: Rect2, label: String, font_size: int, color: Color) -> void:
+	draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y - 12), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, color)
+
+
+func _expand_rect(rect: Rect2, amount: Vector2) -> Rect2:
+	return Rect2(rect.position - amount, rect.size + amount * 2.0)
+
+
+func _oct_points(rect: Rect2, cut: float) -> PackedVector2Array:
+	return PackedVector2Array([
+		rect.position + Vector2(cut, 0),
+		rect.position + Vector2(rect.size.x - cut, 0),
+		rect.position + Vector2(rect.size.x, cut),
+		rect.position + Vector2(rect.size.x, rect.size.y - cut),
+		rect.position + Vector2(rect.size.x - cut, rect.size.y),
+		rect.position + Vector2(cut, rect.size.y),
+		rect.position + Vector2(0, rect.size.y - cut),
+		rect.position + Vector2(0, cut)
+	])
+
+
+func _draw_frontend_touch_targets() -> void:
+	if not _is_touch_build():
+		return
+	for row in _frontend_touch_rows():
+		var rect: Rect2 = row.rect
+		var index := int(row.index)
+		var selected := _frontend_touch_row_selected(index)
+		var label := _frontend_touch_row_label(index)
+		var actionable := bool(row.get("activate", true))
+		var fill := Color("#101612", 0.68 if selected else 0.44)
+		var rim := Color("#d8b45a", 0.84 if selected else 0.42)
+		if not actionable:
+			fill = Color("#0b1110", 0.36)
+			rim = Color("#76d9c8", 0.34)
+		_draw_oct_button(_expand_rect(rect, Vector2(2, 4)), label, "menu", selected, fill, rim)
+
+
+func _frontend_touch_row_selected(index: int) -> bool:
+	match auth_screen:
+		"login", "register":
+			return index == auth_index
+		"character_create":
+			return index == character_field_index
+		"main_menu":
+			return index == main_menu_index
+	return false
+
+
+func _frontend_touch_row_label(index: int) -> String:
+	match auth_screen:
+		"login":
+			return ["EMAIL", "SENHA", "ENTRAR", "CADASTRO", "VISITANTE"][clampi(index, 0, 4)]
+		"register":
+			return ["NOME", "EMAIL", "SENHA", "CRIAR", "LOGIN"][clampi(index, 0, 4)]
+		"character_create":
+			return ["NOME", "TIPO", "CLASSE", "ORIGEM", "INICIAR"][clampi(index, 0, 4)]
+		"main_menu":
+			return String(main_menu_options[clampi(index, 0, main_menu_options.size() - 1)]).to_upper()
+		"systems":
+			if index < 0:
+				return "ANT."
+			if index == 1:
+				return "PROX."
+			return "VOLTAR"
+	return "OK"
 
 
 func _draw_loading_screen() -> void:

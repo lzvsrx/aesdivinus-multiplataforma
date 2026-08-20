@@ -1,7 +1,7 @@
 extends Node2D
 
 const DB_PATH = "user://aesdivinus_ios12_db.json"
-const BUILD_VERSION = "1.4.6-ios12"
+const BUILD_VERSION = "1.4.7-ios12"
 const DEVELOPER_NAME = "Espíritos dos jogos"
 const DEVELOPER_MOTTO = "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 const W = 1024
@@ -1078,8 +1078,47 @@ func _draw_enemy(pos, e):
 
 func _button(label, rect, action, hold=false):
 	buttons.append({"label": label, "rect": rect, "action": action, "hold": hold})
-	draw_rect(rect, Color(0.08, 0.10, 0.11, 0.88))
-	draw_rect(rect, Color(0.72, 0.58, 0.24), false, 2)
+	var action_button = action in ["attack", "block", "mark", "interact", "ok"]
+	if action_button:
+		var center = rect.position + rect.size * 0.5
+		var radius = min(rect.size.x, rect.size.y) * 0.43
+		var fill = Color(0.10, 0.15, 0.12, 0.78)
+		var rim = Color(0.84, 0.70, 0.26, 0.86)
+		if action == "attack":
+			fill = Color(0.33, 0.15, 0.09, 0.84)
+			rim = Color(0.95, 0.78, 0.36, 0.94)
+		elif action == "block":
+			fill = Color(0.10, 0.15, 0.22, 0.80)
+			rim = Color(0.55, 0.82, 0.98, 0.82)
+		elif action == "mark":
+			fill = Color(0.12, 0.12, 0.07, 0.82)
+		draw_circle(center + Vector2(0, 3), radius + 7, Color(0.01, 0.01, 0.01, 0.52))
+		draw_circle(center, radius + 4, Color(0.02, 0.025, 0.02, 0.76))
+		draw_circle(center, radius, fill)
+		draw_arc(center, radius + 3, 0, PI * 2, 48, rim, 3)
+		if action == "mark":
+			_draw_star(center + Vector2(0, -7), radius * 0.34)
+		elif action == "attack":
+			draw_line(center + Vector2(-radius * 0.34, radius * 0.22), center + Vector2(radius * 0.32, -radius * 0.34), Color(0.96, 0.90, 0.70), 4)
+		elif action == "block":
+			draw_polygon(PoolVector2Array([center + Vector2(0, -radius * 0.40), center + Vector2(radius * 0.34, -radius * 0.12), center + Vector2(radius * 0.22, radius * 0.34), center + Vector2(0, radius * 0.48), center + Vector2(-radius * 0.22, radius * 0.34), center + Vector2(-radius * 0.34, -radius * 0.12)]), [Color(0.86, 0.94, 1.0, 0.92)])
+		_text(rect.position + Vector2(12, rect.size.y - 12), label, Color(0.96, 0.9, 0.68))
+		return
+	var cut = min(rect.size.x, rect.size.y) * 0.18
+	var p = PoolVector2Array([
+		rect.position + Vector2(cut, 0),
+		rect.position + Vector2(rect.size.x - cut, 0),
+		rect.position + Vector2(rect.size.x, cut),
+		rect.position + Vector2(rect.size.x, rect.size.y - cut),
+		rect.position + Vector2(rect.size.x - cut, rect.size.y),
+		rect.position + Vector2(cut, rect.size.y),
+		rect.position + Vector2(0, rect.size.y - cut),
+		rect.position + Vector2(0, cut)
+	])
+	draw_polygon(p, [Color(0.06, 0.09, 0.08, 0.82)])
+	for i in range(p.size()):
+		draw_line(p[i], p[(i + 1) % p.size()], Color(0.82, 0.67, 0.28, 0.72), 2)
+	draw_rect(Rect2(rect.position + Vector2(7, 7), rect.size - Vector2(14, 14)), Color(0.85, 0.70, 0.26, 0.08), false, 1)
 	_text(rect.position + Vector2(12, rect.size.y * 0.60), label, Color(0.96, 0.9, 0.68))
 
 func _draw_panel(rect, title):
