@@ -1,0 +1,87 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-ios-ipa.yml"
+      - "project.godot"
+      - "export_presets.cfg"
+      - "scenes/**"
+      - "scripts/**"
+      - "art/**"
+      - "icon.svg"
+      - "icon.svg.import"
+
+jobs:
+  ios-ipa:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Godot 4.7.1
+        run: |
+          set -euo pipefail
+          curl -L -o godot_macos.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.1-stable/Godot_v4.7.1-stable_macos.universal.zip"
+          unzip -q godot_macos.zip -d "$HOME/godot"
+          GODOT_APP="$(find "$HOME/godot" -name 'Godot*.app' -maxdepth 2 | head -n 1)"
+          echo "$GODOT_APP/Contents/MacOS" >> "$GITHUB_PATH"
+          echo "GODOT_BIN=$GODOT_APP/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+
+      - name: Install Godot export templates
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/Library/Application Support/Godot/export_templates/4.7.1.stable"
+          curl -L -o templates.tpz "https://github.com/godotengine/godot-builds/releases/download/4.7.1-stable/Godot_v4.7.1-stable_export_templates.tpz"
+          unzip -q templates.tpz -d templates_unpacked
+          cp -R templates_unpacked/templates/* "$HOME/Library/Application Support/Godot/export_templates/4.7.1.stable/"
+
+      - name: Export Xcode project for iPad Air
+        run: |
+          set -euo pipefail
+          chmod +x ./export_ios_ipad_air.command
+          AESDIVINUS_APPLE_TEAM_ID=ABCDE12XYZ ./export_ios_ipad_air.command
+
+      - name: Build unsigned iOS app
+        run: |
+          set -euo pipefail
+          PROJECT="builds/ios-ipad-air/AESDIVINUS_iPadAir_iOS12_5_8.xcodeproj"
+          SCHEME="AESDIVINUS_iPadAir_iOS12_5_8"
+          DERIVED="$PWD/builds/ios-ipad-air/DerivedData"
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$DERIVED" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package unsigned IPA for Sideloadly
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find builds/ios-ipad-air/DerivedData/Build/Products -type d -name '*.app' | head -n 1)"
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app produced by xcodebuild."
+            exit 1
+          fi
+          rm -rf builds/ios-ipad-air/Payload
+          mkdir -p builds/ios-ipad-air/Payload
+          cp -R "$APP_PATH" builds/ios-ipad-air/Payload/
+          (cd builds/ios-ipad-air && zip -qry AESDIVINUS_iPadAir_iOS12_5_8_unsigned.ipa Payload)
+          ls -lh builds/ios-ipad-air/AESDIVINUS_iPadAir_iOS12_5_8_unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AESDIVINUS_iPadAir_iOS12_5_8_unsigned_ipa
+          path: builds/ios-ipad-air/AESDIVINUS_iPadAir_iOS12_5_8_unsigned.ipa
+          if-no-files-found: error

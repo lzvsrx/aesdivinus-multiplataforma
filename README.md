@@ -164,6 +164,18 @@ Instalar direto no iPad Air conectado a um Mac:
 AESDIVINUS_APPLE_TEAM_ID=SEUTEAMID1 AESDIVINUS_IOS_DEVICE_ID=UDID_DO_IPAD ./install_ios_ipad_air.command
 ```
 
+Gerar um `.ipa` pelo GitHub Actions para instalar com Sideloadly no Windows:
+
+1. Abra o repositório no GitHub e rode o workflow `Build iOS IPA`.
+2. Baixe o artifact `AESDIVINUS_iPadAir_iOS12_5_8_unsigned_ipa`.
+3. Arraste o `.ipa` para o Sideloadly e instale no iPad conectado.
+
+Com GitHub CLI instalado:
+
+```powershell
+.\download_latest_ios_ipa.ps1
+```
+
 Todas as plataformas:
 
 ```powershell
