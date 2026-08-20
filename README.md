@@ -176,6 +176,18 @@ Com GitHub CLI instalado:
 .\download_latest_ios_ipa.ps1
 ```
 
+Para iPad Air antigo no iOS 12.5.8, use o alvo legacy em Godot 3.6.1:
+
+```powershell
+.\download_latest_ios12_legacy_ipa.ps1
+```
+
+O arquivo esperado para o Sideloadly e:
+
+```text
+builds\ios12-legacy\AESDIVINUS_iOS12_Legacy_unsigned.ipa
+```
+
 Todas as plataformas:
 
 ```powershell

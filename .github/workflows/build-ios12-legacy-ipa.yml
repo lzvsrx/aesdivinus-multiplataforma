@@ -1,0 +1,90 @@
+name: Build iOS 12 Legacy IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-ios12-legacy-ipa.yml"
+      - "legacy_ios12/**"
+
+jobs:
+  ios12-legacy-ipa:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Godot 3.6.1
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          curl -L -o godot_macos.zip "https://github.com/godotengine/godot-builds/releases/download/3.6.1-stable/Godot_v3.6.1-stable_osx.universal.zip"
+          unzip -q godot_macos.zip -d "$HOME/godot3"
+          GODOT_APP="$(find "$HOME/godot3" -name 'Godot*.app' -maxdepth 2 | head -n 1)"
+          echo "GODOT_BIN=$GODOT_APP/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+
+      - name: Install Godot 3.6.1 export templates
+        run: |
+          set -euo pipefail
+          curl -L -o templates.tpz "https://github.com/godotengine/godot-builds/releases/download/3.6.1-stable/Godot_v3.6.1-stable_export_templates.tpz"
+          unzip -q templates.tpz -d templates_unpacked
+          mkdir -p "$HOME/Library/Application Support/Godot/templates/3.6.1.stable"
+          mkdir -p "$HOME/Library/Application Support/Godot/export_templates/3.6.1.stable"
+          cp -R templates_unpacked/templates/* "$HOME/Library/Application Support/Godot/templates/3.6.1.stable/"
+          cp -R templates_unpacked/templates/* "$HOME/Library/Application Support/Godot/export_templates/3.6.1.stable/"
+
+      - name: Export Xcode project
+        run: |
+          set -euo pipefail
+          mkdir -p builds/ios12-legacy
+          "$GODOT_BIN" --path legacy_ios12 --export "iOS Legacy 12" "$PWD/builds/ios12-legacy/AESDIVINUS_iOS12_Legacy.zip"
+          find builds/ios12-legacy -maxdepth 3 -print
+
+      - name: Build unsigned iOS 12 app
+        run: |
+          set -euo pipefail
+          PROJECT="$(find builds/ios12-legacy -name '*.xcodeproj' -maxdepth 4 | head -n 1)"
+          if [ -z "$PROJECT" ]; then
+            echo "No Xcode project generated."
+            exit 1
+          fi
+          xcodebuild -list -project "$PROJECT"
+          SCHEME="$(xcodebuild -list -project "$PROJECT" | awk '/Schemes:/{getline; gsub(/^[ \t]+/, ""); print; exit}')"
+          DERIVED="$PWD/builds/ios12-legacy/DerivedData"
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$DERIVED" \
+            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package unsigned IPA for Sideloadly
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find builds/ios12-legacy/DerivedData/Build/Products -type d -name '*.app' | head -n 1)"
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app produced by xcodebuild."
+            exit 1
+          fi
+          rm -rf builds/ios12-legacy/Payload
+          mkdir -p builds/ios12-legacy/Payload
+          cp -R "$APP_PATH" builds/ios12-legacy/Payload/
+          (cd builds/ios12-legacy && zip -qry AESDIVINUS_iOS12_Legacy_unsigned.ipa Payload)
+          ls -lh builds/ios12-legacy/AESDIVINUS_iOS12_Legacy_unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AESDIVINUS_iOS12_Legacy_unsigned_ipa
+          path: builds/ios12-legacy/AESDIVINUS_iOS12_Legacy_unsigned.ipa
+          if-no-files-found: error
