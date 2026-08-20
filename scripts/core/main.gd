@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.5"
+const BUILD_VERSION := "1.4.6"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
