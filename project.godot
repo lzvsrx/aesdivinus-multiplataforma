@@ -8,7 +8,7 @@ config_version=5
 
 config/name="AESDIVINUS"
 run/main_scene="res://scenes/core/main.tscn"
-config/version="1.4.0"
+config/version="1.4.1"
 config/features=PackedStringArray("4.7")
 config/icon="res://icon.svg"
 

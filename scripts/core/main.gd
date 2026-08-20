@@ -6,7 +6,7 @@ const PLAYER_SIZE := Vector2(34, 56)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.4.0"
+const BUILD_VERSION := "1.4.1"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -64,6 +64,78 @@ var maps := [
 			{"name": "Elric", "pos": Vector2(740, FLOOR_Y), "lines": ["A marca reage ao sangue derramado.", "Nao confunda milagre com controle."]}
 		],
 		"message": "Ao fundo, o exército é engolido pelo caos."
+	},
+	{
+		"id": "gradon_gate",
+		"title": "Portoes de Gradon",
+		"goal": "Atravesse os portoes e entregue o relato ao Conselho.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Praeco Caesarum", "type": "barbarian", "pos": Vector2(1240, FLOOR_Y), "hp": 120},
+			{"name": "Servus Belli Guarda", "type": "servi", "pos": Vector2(1780, FLOOR_Y), "hp": 92}
+		],
+		"items": [
+			{"name": "Relato Manchado", "pos": Vector2(520, FLOOR_Y - 20), "amount": 1, "taken": false},
+			{"name": "Aes Divinus", "pos": Vector2(2140, FLOOR_Y - 20), "amount": 2, "taken": false}
+		],
+		"npcs": [
+			{"name": "Albert", "pos": Vector2(370, FLOOR_Y), "lines": ["Os portoes nao abrem para medo.", "Leve o relato. O Conselho precisa ouvir antes que Michael esconda os rastros."]}
+		],
+		"message": "Gradon surge entre fumaca, sinos e portoes fechados."
+	},
+	{
+		"id": "gradon_council",
+		"title": "Sala do Conselho",
+		"goal": "Defenda sua versao diante dos duques de Gradron.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Qui Decepti Sunt", "type": "barbarian", "pos": Vector2(960, FLOOR_Y), "hp": 115},
+			{"name": "Arauto de Stipulation", "type": "boss", "pos": Vector2(1900, FLOOR_Y), "hp": 210}
+		],
+		"items": [
+			{"name": "Aes Divinus", "pos": Vector2(620, FLOOR_Y - 20), "amount": 2, "taken": false}
+		],
+		"npcs": [
+			{"name": "Donovan", "pos": Vector2(340, FLOOR_Y), "lines": ["Palavras tambem sao escudos.", "Se mentirem, deixe a lamina responder por ultimo."]},
+			{"name": "Elric", "pos": Vector2(470, FLOOR_Y), "lines": ["A sombra nao tem sombra propria.", "Stipulation ja tocou este salao."]}
+		],
+		"message": "O Conselho vira tribunal quando a corrupcao atravessa as paredes."
+	},
+	{
+		"id": "robert_forge",
+		"title": "Forja de Robert Smith",
+		"goal": "Use Aes Divinus para preparar armas contra os marcados corrompidos.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Bestia Ignis", "type": "ignis", "pos": Vector2(1420, FLOOR_Y), "hp": 150},
+			{"name": "Ogre Larva Belli", "type": "boss", "pos": Vector2(2180, FLOOR_Y), "hp": 240}
+		],
+		"items": [
+			{"name": "Fragmento de Ferro", "pos": Vector2(460, FLOOR_Y - 20), "amount": 3, "taken": false},
+			{"name": "Aes Divinus", "pos": Vector2(820, FLOOR_Y - 20), "amount": 3, "taken": false}
+		],
+		"npcs": [
+			{"name": "Hilda", "pos": Vector2(350, FLOOR_Y), "lines": ["Pegue uma lanca se quiser manter distancia.", "A forja canta quando a marca se aproxima."]}
+		],
+		"message": "Martelos ecoam. O metal verde-dourado responde a Marca."
+	},
+	{
+		"id": "michael_shadow_woods",
+		"title": "Floresta sem Luz",
+		"goal": "Entre no dominio Michael e encontre o Corvus Stipulation.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Mercenario sem Luz", "type": "barbarian", "pos": Vector2(760, FLOOR_Y), "hp": 95},
+			{"name": "Mulier Umbris Consumptae", "type": "ignis", "pos": Vector2(1460, FLOOR_Y), "hp": 135},
+			{"name": "Corvus Stipulation", "type": "boss", "pos": Vector2(2260, FLOOR_Y), "hp": 300}
+		],
+		"items": [
+			{"name": "Relato Manchado", "pos": Vector2(1120, FLOOR_Y - 20), "amount": 2, "taken": false}
+		],
+		"npcs": [
+			{"name": "Ethan", "pos": Vector2(330, FLOOR_Y), "lines": ["Aqui a floresta nao devolve ecos.", "Se algo nao tiver sombra, ataque primeiro."]}
+		],
+		"message": "A rota para Michael apaga tochas, nomes e promessas."
 	}
 ]
 
@@ -123,6 +195,13 @@ var transition_duration := 0.9
 var transition_title := "A MARCA DESPERTA"
 var transition_from := "void"
 var transition_to := "login"
+var loading_active := false
+var loading_timer := 0.0
+var loading_duration := 1.2
+var loading_title := ""
+var loading_detail := ""
+var pending_map_index := -1
+var pending_after_load := ""
 var frontend_time := 0.0
 var intro_timer := 0.0
 var intro_duration := 4.8
@@ -166,8 +245,17 @@ var character_profile := {
 var character_type_options := ["William", "Ethan", "Donovan", "Albert", "Hilda", "Elric"]
 var class_options := ["Cavaleiro", "Sentinela", "Mercenario", "Lanceiro", "Arqueiro", "Ferreiro", "Estrategista", "Marcado Divino"]
 var origin_options := ["Gradon", "Fronteira Wood", "Castelo de Gradon", "Sala do Conselho", "Aposentos Militares", "Forja de Robert Smith", "Casa Exilada", "Ordem Divina"]
-var main_menu_options := ["Novo Jogo", "Carregar", "Criar Personagem", "Sistemas", "Sair"]
-var system_overlay_order := ["inventory", "equipment", "character", "quests", "map", "forge", "shop", "settings", "codex", "direction", "database"]
+var screen_flow := [
+	{"id": "login", "title": "1. Portao de Gradon", "function": "Login, convidado ou cadastro local."},
+	{"id": "register", "title": "2. Juramento", "function": "Cria usuario no banco local."},
+	{"id": "character_create", "title": "3. Forja de Herdeiros", "function": "Nome, origem, classe e personagem base."},
+	{"id": "main_menu", "title": "4. Sala do Conselho", "function": "Novo jogo, carregar, sistemas ou fluxo."},
+	{"id": "systems", "title": "5. Arquivos de Gradon", "function": "Inventario, arsenal, mapa, loja, forja, codex, ajustes e banco."},
+	{"id": "game", "title": "6. Campanha", "function": "Fases em sequencia: Wood, Gradon, Conselho, Forja e Michael."},
+	{"id": "victory", "title": "7. Conclusao do arco", "function": "Fecha a sequencia atual e salva progresso."}
+]
+var main_menu_options := ["Novo Jogo", "Carregar", "Criar Personagem", "Sistemas", "Fluxo de Telas", "Sair"]
+var system_overlay_order := ["inventory", "equipment", "character", "quests", "map", "forge", "shop", "settings", "codex", "direction", "database", "flow"]
 var weapon_catalog := {
 	"Espada de Gradon": {"type": "sword", "base_damage": 4, "price": 0, "description": "equilibrada e fiel ao prologo"},
 	"Lamina de Ferro": {"type": "sword", "base_damage": 8, "price": 80, "description": "boa para combo leve"},
@@ -625,8 +713,43 @@ func _load_map(idx: int) -> void:
 	_show_banner(data.message)
 
 
+func _begin_map_load(idx: int, reason := "campaign") -> void:
+	pending_map_index = clampi(idx, 0, maps.size() - 1)
+	pending_after_load = reason
+	var data: Dictionary = maps[pending_map_index]
+	loading_title = "Carregando: " + String(data.title)
+	loading_detail = "Tela " + str(pending_map_index + 1) + "/" + str(maps.size()) + " | " + String(data.goal)
+	loading_timer = loading_duration
+	loading_active = true
+	_start_transition(loading_title, maps[map_index].id if map_index >= 0 and map_index < maps.size() else "menu", data.id)
+
+
+func _finish_pending_map_load() -> void:
+	if pending_map_index < 0:
+		loading_active = false
+		return
+	_load_map(pending_map_index)
+	if pending_after_load == "new_game" or pending_after_load == "load_save":
+		game_started = true
+		paused = false
+		overlay = ""
+	checkpoint = {"map_index": map_index, "pos_x": player.pos.x}
+	_record_action("screen_loaded", {"map_index": map_index, "map": maps[map_index].id, "reason": pending_after_load})
+	_save_game()
+	pending_map_index = -1
+	pending_after_load = ""
+	loading_active = false
+
+
 func _physics_process(delta: float) -> void:
 	_update_screen_effects(delta)
+	if loading_active:
+		loading_timer = maxf(0.0, loading_timer - delta)
+		if loading_timer <= 0.0:
+			_finish_pending_map_load()
+		_update_ui()
+		queue_redraw()
+		return
 	if not game_started:
 		_handle_frontend_input()
 		_update_ui()
@@ -791,22 +914,21 @@ func _activate_main_menu() -> void:
 			_set_auth_screen("character_create")
 			return
 		_reset_game()
-		game_started = true
-		paused = false
-		overlay = ""
+		game_started = false
 		_record_action("new_game_started", {"character": character_profile.duplicate(true)})
-		_save_game()
-		_show_banner("Prologo iniciado.")
+		_begin_map_load(0, "new_game")
 	elif selected == "Carregar":
 		_load_save()
-		game_started = true
-		paused = false
+		_begin_map_load(map_index, "load_save")
 		_record_action("continue_game", {"map_index": map_index})
 	elif selected == "Criar Personagem":
 		_set_auth_screen("character_create")
 	elif selected == "Sistemas":
 		_set_auth_screen("systems")
 		overlay = "inventory"
+	elif selected == "Fluxo de Telas":
+		_set_auth_screen("systems")
+		overlay = "flow"
 	else:
 		get_tree().quit()
 
@@ -874,7 +996,10 @@ func _screen_display_name(name: String) -> String:
 		"settings": "CONFIGURACOES",
 		"codex": "CODEX",
 		"direction": "DIRECAO",
-		"database": "BANCO LOCAL"
+		"database": "BANCO LOCAL",
+		"flow": "FLUXO DE TELAS",
+		"game": "CAMPANHA",
+		"victory": "CONCLUSAO"
 	}
 	return names.get(name, name.to_upper())
 
@@ -1713,10 +1838,7 @@ func _check_map_exit() -> void:
 	var living := enemies.filter(func(e): return not e.dead)
 	if player.pos.x > WORLD_W - 140 and living.is_empty():
 		if map_index < maps.size() - 1:
-			_load_map(map_index + 1)
-			checkpoint = {"map_index": map_index, "pos_x": player.pos.x}
-			_record_action("map_changed", {"map_index": map_index, "map": maps[map_index].id})
-			_save_game()
+			_begin_map_load(map_index + 1, "map_exit")
 		else:
 			victory = true
 			_record_action("prologue_completed", {"map": maps[map_index].id})
@@ -1818,6 +1940,8 @@ func _panel_text() -> String:
 		return _direction_panel_text()
 	if overlay == "database":
 		return _database_panel_text()
+	if overlay == "flow":
+		return _flow_panel_text()
 	var living := enemies.filter(func(e): return not e.dead).size()
 	var text := "%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s" % [maps[map_index].goal, living, player.loyalty, "pronta" if player.special_cd <= 0 else "%.1fs" % player.special_cd]
 	if banner_timer > 0:
@@ -1903,6 +2027,8 @@ func _panel_text_for_overlay(name: String) -> String:
 			return _direction_panel_text()
 		"database":
 			return _database_panel_text()
+		"flow":
+			return _flow_panel_text()
 	return "Sistema nao selecionado."
 
 
@@ -1917,6 +2043,19 @@ func _mask_text(value: String) -> String:
 	if value.is_empty():
 		return "_"
 	return "*".repeat(value.length())
+
+
+func _flow_panel_text() -> String:
+	var lines := ["FLUXO DE TELAS", "", "Cada parte tem entrada, carregamento e funcao propria.", ""]
+	for step in screen_flow:
+		lines.append("%s - %s" % [step.title, step.function])
+	lines.append("")
+	lines.append("Sequencia da campanha:")
+	for i in range(maps.size()):
+		lines.append("%d. %s -> %s" % [i + 1, maps[i].title, maps[i].goal])
+	lines.append("")
+	lines.append("Ao trocar de tela ou cena, o jogo mostra CARREGANDO e salva o estado no banco local.")
+	return "\n".join(lines)
 
 
 func _inventory_panel_text() -> String:
@@ -1970,16 +2109,16 @@ func _character_panel_text() -> String:
 func _quests_panel_text() -> String:
 	var current: Dictionary = maps[map_index]
 	var living := enemies.filter(func(e): return not e.dead).size()
-	return "MISSOES\n\nPrincipal: Sobreviver ao prologo da Floresta Wood.\nObjetivo atual: %s\nInimigos restantes: %d\n\nGanchos de historia:\n- Salvar companheiro aumenta lealdade.\n- Investigar cadaveres revela a origem da Marca Divina.\n- Chegar a Gradon abre Conselho, Forja e intriga politica.\n\nGanchos de jogabilidade:\n- Canis Ferox ensina esquiva.\n- Barbaro pesado ensina ataque carregado.\n- Ogre ensina pulo, bloqueio e leitura de telegraph." % [current.goal, living]
+	return "MISSOES\n\nCapitulo atual: %s (%d/%d)\nObjetivo: %s\nInimigos restantes: %d\n\nSeguimento:\n1 Wood: queda do exercito e Marca Divina.\n2 Gradon: portoes, Conselho e intriga politica.\n3 Forja: armas Aes e ferramentas de Robert.\n4 Michael: sombras, mercenarios e Corvus Stipulation.\n\nGanchos de jogabilidade:\n- Canis Ferox ensina esquiva.\n- Barbaro pesado ensina ataque carregado.\n- Ogre e Corvus exigem bloqueio, Marca e leitura de ataque." % [current.title, map_index + 1, maps.size(), current.goal, living]
 
 
 func _map_panel_text() -> String:
-	var lines := ["MAPA", ""]
+	var lines := ["MAPA E CENAS", "", "Cada cena tem carregamento, objetivo, inimigos, itens e NPCs.", ""]
 	for i in range(maps.size()):
-		lines.append("%s %s" % [">" if i == map_index else " ", maps[i].title])
-	lines.append("  Gradon")
+		lines.append("%s %d. %s" % [">" if i == map_index else " ", i + 1, maps[i].title])
+		lines.append("    %s" % String(maps[i].goal))
 	lines.append("")
-	lines.append("Funcoes: teleporte por checkpoint, limites de camera, saidas entre areas.")
+	lines.append("Funcao: orientar a campanha e mostrar a proxima tela antes da transicao.")
 	return "\n".join(lines)
 
 
@@ -2326,6 +2465,8 @@ func _draw_overlays() -> void:
 			draw_rect(Rect2(420, 62, 440 * boss[0].hp / boss[0].max_hp, 12), Color("#9b2d2d"))
 	if transition_timer > 0:
 		_draw_transition()
+	if loading_active:
+		_draw_loading_screen()
 	_draw_touch_controls()
 
 
@@ -2342,6 +2483,19 @@ func _draw_touch_controls() -> void:
 		draw_rect(rect, color)
 		draw_rect(rect, border, false, 2)
 		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, rect.size.y * 0.62), String(button.label), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 18, Color("#f6e7b1"))
+
+
+func _draw_loading_screen() -> void:
+	var progress := 1.0 - clampf(loading_timer / maxf(0.1, loading_duration), 0.0, 1.0)
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#050605", 0.86))
+	var center := Vector2(640, 360)
+	_draw_divine_star(center + Vector2(0, -92), 38 + sin(frontend_time * 3.0) * 3.0)
+	draw_arc(center + Vector2(0, -92), 68, 0.0, TAU * maxf(progress, 0.03), 72, Color("#6ee7cf", 0.88), 5.0)
+	draw_string(ThemeDB.fallback_font, center + Vector2(-260, 0), loading_title, HORIZONTAL_ALIGNMENT_CENTER, 520, 34, Color("#f6e7b1"))
+	draw_string(ThemeDB.fallback_font, center + Vector2(-320, 44), loading_detail, HORIZONTAL_ALIGNMENT_CENTER, 640, 18, Color("#76d9c8"))
+	draw_rect(Rect2(center.x - 220, center.y + 92, 440, 14), Color("#17110b"))
+	draw_rect(Rect2(center.x - 216, center.y + 96, 432 * progress, 6), Color("#d8b45a"))
+	draw_string(ThemeDB.fallback_font, center + Vector2(-180, 144), "Carregando sistemas, mapa, inimigos, itens e salvamento local.", HORIZONTAL_ALIGNMENT_CENTER, 360, 14, Color("#e8d98b", 0.82))
 
 
 func _draw_frontend_stage() -> void:
@@ -2490,6 +2644,7 @@ func _screen_accent(screen_name: String) -> Color:
 		"codex": Color("#e8d98b"),
 		"direction": Color("#d96d8b"),
 		"database": Color("#76d9c8"),
+		"flow": Color("#f6e7b1"),
 		"pause": Color("#d8b45a")
 	}
 	return accents.get(screen_name, Color("#d8b45a"))
