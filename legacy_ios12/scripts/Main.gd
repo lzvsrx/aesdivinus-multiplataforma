@@ -13,6 +13,7 @@ var origin_index = 0
 var class_index = 0
 var typed_name = "William"
 var message = "Toque em JOGAR para comecar."
+var ui_font = null
 
 var characters = ["William", "Ethan", "Donovan", "Albert", "Hilda", "Elric"]
 var origins = ["Gradon", "Fronteira Wood", "Castelo de Gradon", "Forja de Robert", "Ordem Divina"]
@@ -37,6 +38,10 @@ var buttons = []
 var held = {}
 
 func _ready():
+	var font_source = Label.new()
+	add_child(font_source)
+	ui_font = font_source.get_font("font")
+	font_source.hide()
 	set_process(true)
 	set_process_input(true)
 	load_game()
@@ -201,35 +206,35 @@ func draw_background():
 		draw_polygon([Vector2(x, FLOOR_Y), Vector2(x + 48, 260), Vector2(x + 95, FLOOR_Y)], [Color(0.05, 0.16, 0.12)])
 
 func draw_intro():
-	draw_string(get_font("font"), Vector2(360, 310), "AESDIVINUS", Color(0.95, 0.83, 0.35))
-	draw_string(get_font("font"), Vector2(300, 354), "Legacy iOS 12 - iPad Air", Color(0.78, 0.9, 0.82))
+	draw_string(ui_font, Vector2(360, 310), "AESDIVINUS", Color(0.95, 0.83, 0.35))
+	draw_string(ui_font, Vector2(300, 354), "Legacy iOS 12 - iPad Air", Color(0.78, 0.9, 0.82))
 
 func draw_title():
-	draw_string(get_font("font"), Vector2(338, 210), "AESDIVINUS", Color(1.0, 0.85, 0.32))
-	draw_string(get_font("font"), Vector2(250, 260), "A Marca Divina contra a Homis Corruption", Color(0.82, 0.9, 0.82))
+	draw_string(ui_font, Vector2(338, 210), "AESDIVINUS", Color(1.0, 0.85, 0.32))
+	draw_string(ui_font, Vector2(250, 260), "A Marca Divina contra a Homis Corruption", Color(0.82, 0.9, 0.82))
 	add_button("JOGAR", Rect2(360, 340, 300, 70), "play")
 	add_button("CARREGAR", Rect2(360, 430, 300, 70), "load")
-	draw_string(get_font("font"), Vector2(250, 540), message, Color(0.9, 0.9, 0.85))
+	draw_string(ui_font, Vector2(250, 540), message, Color(0.9, 0.9, 0.85))
 
 func draw_create():
-	draw_string(get_font("font"), Vector2(270, 150), "Criacao de Personagem", Color(1.0, 0.85, 0.32))
-	draw_string(get_font("font"), Vector2(260, 220), "Nome: " + typed_name, Color(0.95, 0.95, 0.9))
+	draw_string(ui_font, Vector2(270, 150), "Criacao de Personagem", Color(1.0, 0.85, 0.32))
+	draw_string(ui_font, Vector2(260, 220), "Nome: " + typed_name, Color(0.95, 0.95, 0.9))
 	add_button("Tipo: " + characters[character_index], Rect2(260, 275, 500, 58), "char")
 	add_button("Origem: " + origins[origin_index], Rect2(260, 345, 500, 58), "origin")
 	add_button("Classe: " + classes[class_index], Rect2(260, 415, 500, 58), "class")
 	add_button("ENTRAR NA FLORESTA", Rect2(300, 515, 420, 70), "play")
 
 func draw_game():
-	draw_string(get_font("font"), Vector2(28, 42), typed_name + " - " + classes[class_index] + " de " + origins[origin_index], Color(0.95, 0.95, 0.86))
+	draw_string(ui_font, Vector2(28, 42), typed_name + " - " + classes[class_index] + " de " + origins[origin_index], Color(0.95, 0.95, 0.86))
 	draw_bar(Vector2(28, 58), 240, player.hp, player.max_hp, Color(0.82, 0.15, 0.12))
-	draw_string(get_font("font"), Vector2(28, 92), "Moedas: " + str(player.coins) + "  Instinto: " + str(player.instinct), Color(0.9, 0.82, 0.45))
-	draw_string(get_font("font"), Vector2(28, 118), message, Color(0.82, 0.9, 0.82))
+	draw_string(ui_font, Vector2(28, 92), "Moedas: " + str(player.coins) + "  Instinto: " + str(player.instinct), Color(0.9, 0.82, 0.45))
+	draw_string(ui_font, Vector2(28, 118), message, Color(0.82, 0.9, 0.82))
 	draw_player(Vector2(player.x, player.y))
 	if enemy.hp > 0:
 		draw_enemy(Vector2(enemy.x, FLOOR_Y), enemy.name)
 		draw_bar(Vector2(enemy.x - 70, FLOOR_Y - 105), 140, enemy.hp, enemy.max_hp, Color(0.55, 0.08, 0.08))
 	else:
-		draw_string(get_font("font"), Vector2(680, 435), "Gradon respira por enquanto.", Color(0.9, 0.82, 0.45))
+		draw_string(ui_font, Vector2(680, 435), "Gradon respira por enquanto.", Color(0.9, 0.82, 0.45))
 	add_button("<", Rect2(42, 640, 92, 86), "left", true)
 	add_button(">", Rect2(154, 640, 92, 86), "right", true)
 	add_button("ATQ", Rect2(760, 638, 92, 86), "attack")
@@ -255,7 +260,7 @@ func draw_enemy(pos, label):
 	draw_rect(Rect2(pos.x - 24, pos.y - 62, 48, 62), Color(0.22, 0.09, 0.08))
 	draw_circle(Vector2(pos.x - 8, pos.y - 45), 4, Color(0.9, 0.15, 0.08))
 	draw_circle(Vector2(pos.x + 8, pos.y - 45), 4, Color(0.9, 0.15, 0.08))
-	draw_string(get_font("font"), Vector2(pos.x - 72, pos.y - 118), label, Color(0.95, 0.65, 0.58))
+	draw_string(ui_font, Vector2(pos.x - 72, pos.y - 118), label, Color(0.95, 0.65, 0.58))
 
 func draw_bar(pos, width, value, max_value, color):
 	draw_rect(Rect2(pos.x, pos.y, width, 14), Color(0.03, 0.03, 0.04))
@@ -268,7 +273,7 @@ func add_button(label, rect, action, hold=false):
 	buttons.append({"label": label, "rect": rect, "action": action, "hold": hold})
 	draw_rect(rect, Color(0.1, 0.12, 0.14, 0.88))
 	draw_rect(rect, Color(0.75, 0.62, 0.28), false, 2)
-	draw_string(get_font("font"), Vector2(rect.position.x + 14, rect.position.y + rect.size.y * 0.58), label, Color(0.95, 0.9, 0.72))
+	draw_string(ui_font, Vector2(rect.position.x + 14, rect.position.y + rect.size.y * 0.58), label, Color(0.95, 0.9, 0.72))
 
 func draw_touch_buttons():
 	pass
