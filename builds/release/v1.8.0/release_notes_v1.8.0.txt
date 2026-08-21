@@ -1,0 +1,8 @@
+AESDIVINUS v1.8.0
+
+- Expande a campanha de RPG de turno com 6 novas cenas jogaveis apos a Floresta sem Luz.
+- Novas cenas: Estrada de Roberts, Quartel de Armand, Capela de Legrand, Fortaleza Michael, Aldeia das Umbrae e Reliquiario Sanctis.
+- Cada nova cena tem objetivo, inimigos, itens, NPCs, introducao narrativa, dica de batalha, conclusao e falas-chave.
+- Atualiza Codex, missoes, mapa, fluxo de telas e conclusao do arco para refletir Wood, Gradon, Ducados, Michael, Umbrae e Sanctis.
+- Corrige o fundo procedural para suportar qualquer quantidade de mapas sem erro de indice.
+- Atualiza Android para versionCode 31 / versionName 1.8.0.

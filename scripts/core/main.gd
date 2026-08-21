@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.7.0"
+const BUILD_VERSION := "1.8.0"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -137,6 +137,121 @@ var maps := [
 			{"name": "Ethan", "pos": Vector2(330, FLOOR_Y), "lines": ["Aqui a floresta nao devolve ecos.", "Se algo nao tiver sombra, ataque primeiro."]}
 		],
 		"message": "A rota para Michael apaga tochas, nomes e promessas."
+	},
+	{
+		"id": "roberts_grain_road",
+		"title": "Estrada de Roberts",
+		"goal": "Proteja os celeiros e descubra quem esta roubando Aes Divinus.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Salteador da Ceifa", "type": "barbarian", "pos": Vector2(820, FLOOR_Y), "hp": 118},
+			{"name": "Servus Belli Carroceiro", "type": "servi", "pos": Vector2(1370, FLOOR_Y), "hp": 106},
+			{"name": "Bestia Ignis do Celeiro", "type": "ignis", "pos": Vector2(2180, FLOOR_Y), "hp": 176}
+		],
+		"items": [
+			{"name": "Fragmento de Ferro", "pos": Vector2(520, FLOOR_Y - 20), "amount": 2, "taken": false},
+			{"name": "Racao", "pos": Vector2(940, FLOOR_Y - 20), "amount": 2, "taken": false}
+		],
+		"npcs": [
+			{"name": "Albert", "pos": Vector2(360, FLOOR_Y), "lines": ["Roberts alimenta Gradon. Se estes campos cairem, o Conselho vira uma mesa vazia.", "O ladrao nao quer trigo. Quer que o povo culpe William pela fome."]}
+		],
+		"message": "A estrada dos celeiros revela carrocas vazias, marcas queimadas e moedas de Michael."
+	},
+	{
+		"id": "armand_barracks",
+		"title": "Quartel de Armand",
+		"goal": "Recupere a lealdade dos soldados antes que a ordem vire motim.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Soldado Deceptus", "type": "barbarian", "pos": Vector2(740, FLOOR_Y), "hp": 130},
+			{"name": "Capitao sem Juramento", "type": "barbarian", "pos": Vector2(1420, FLOOR_Y), "hp": 156},
+			{"name": "Praeco Caesarum Armand", "type": "boss", "pos": Vector2(2180, FLOOR_Y), "hp": 280}
+		],
+		"items": [
+			{"name": "Relato Manchado", "pos": Vector2(620, FLOOR_Y - 20), "amount": 1, "taken": false},
+			{"name": "Aes Divinus", "pos": Vector2(1720, FLOOR_Y - 20), "amount": 2, "taken": false}
+		],
+		"npcs": [
+			{"name": "Donovan", "pos": Vector2(360, FLOOR_Y), "lines": ["Soldado sem verdade obedece ao primeiro grito.", "Mostre a eles que disciplina nao e medo."]}
+		],
+		"message": "No quartel, escudos batem no chao como um coracao prestes a romper."
+	},
+	{
+		"id": "legrand_chapel",
+		"title": "Capela de Legrand",
+		"goal": "Investigue a capela diplomatica e prove que a fe foi falsificada.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Monge Qui Deceptus", "type": "barbarian", "pos": Vector2(840, FLOOR_Y), "hp": 124},
+			{"name": "Mulier de Vitral Escuro", "type": "ignis", "pos": Vector2(1510, FLOOR_Y), "hp": 168},
+			{"name": "Arauto do Sino Partido", "type": "boss", "pos": Vector2(2260, FLOOR_Y), "hp": 300}
+		],
+		"items": [
+			{"name": "Aes Divinus", "pos": Vector2(520, FLOOR_Y - 20), "amount": 3, "taken": false},
+			{"name": "Relato Manchado", "pos": Vector2(1090, FLOOR_Y - 20), "amount": 1, "taken": false}
+		],
+		"npcs": [
+			{"name": "Elric", "pos": Vector2(360, FLOOR_Y), "lines": ["Sino santo nao chama sombra.", "Se a capela mente, a Marca vai doer antes de brilhar."]}
+		],
+		"message": "A Capela de Legrand conserva luz nos vitrais, mas nenhuma sombra ajoelha corretamente."
+	},
+	{
+		"id": "michael_keep",
+		"title": "Fortaleza Michael",
+		"goal": "Invada a fortaleza e encontre a sala onde Stipulation guarda os nomes roubados.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Mercenario do Corvo", "type": "barbarian", "pos": Vector2(780, FLOOR_Y), "hp": 146},
+			{"name": "Umbra Malefica", "type": "ignis", "pos": Vector2(1460, FLOOR_Y), "hp": 184},
+			{"name": "Guardiao Corvus", "type": "boss", "pos": Vector2(2280, FLOOR_Y), "hp": 340}
+		],
+		"items": [
+			{"name": "Aes Divinus", "pos": Vector2(720, FLOOR_Y - 20), "amount": 2, "taken": false},
+			{"name": "Fragmento de Ferro", "pos": Vector2(1880, FLOOR_Y - 20), "amount": 3, "taken": false}
+		],
+		"npcs": [
+			{"name": "Ethan", "pos": Vector2(350, FLOOR_Y), "lines": ["Se eu esquecer meu proprio nome aqui, me puxe pela capa.", "Michael nao esconde paredes. Esconde escolhas."]}
+		],
+		"message": "A fortaleza Michael nao tem bandeiras ao vento. Tem olhos atras de cada janela."
+	},
+	{
+		"id": "umbrae_village",
+		"title": "Aldeia das Umbrae",
+		"goal": "Quebre o ritual das Umbrae sem deixar a vila virar exercito morto.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Mulier Umbris Consumptae", "type": "ignis", "pos": Vector2(760, FLOOR_Y), "hp": 166},
+			{"name": "Servus Belli Aldeao", "type": "servi", "pos": Vector2(1320, FLOOR_Y), "hp": 136},
+			{"name": "Superior Umbrae Maleficae", "type": "boss", "pos": Vector2(2220, FLOOR_Y), "hp": 360}
+		],
+		"items": [
+			{"name": "Racao", "pos": Vector2(460, FLOOR_Y - 20), "amount": 2, "taken": false},
+			{"name": "Relato Manchado", "pos": Vector2(1520, FLOOR_Y - 20), "amount": 2, "taken": false}
+		],
+		"npcs": [
+			{"name": "Hilda", "pos": Vector2(360, FLOOR_Y), "lines": ["Nao ataque a dor como se fosse culpa.", "Corte o ritual. Poupe quem ainda respira por vontade propria."]}
+		],
+		"message": "Na aldeia tomada, cada porta fechada parece pedir perdao antes de abrir."
+	},
+	{
+		"id": "sanctis_reliquary",
+		"title": "Reliquiario Sanctis",
+		"goal": "Escolha como usar a Marca Divina e enfrente a voz que tenta coroar a sombra.",
+		"spawn": Vector2(120, FLOOR_Y),
+		"enemies": [
+			{"name": "Praeco de Cinco Asas", "type": "barbarian", "pos": Vector2(700, FLOOR_Y), "hp": 170},
+			{"name": "Bestia Ignis Sagrada", "type": "ignis", "pos": Vector2(1360, FLOOR_Y), "hp": 210},
+			{"name": "Vox Stipulation", "type": "boss", "pos": Vector2(2260, FLOOR_Y), "hp": 420}
+		],
+		"items": [
+			{"name": "Aes Divinus", "pos": Vector2(540, FLOOR_Y - 20), "amount": 5, "taken": false},
+			{"name": "Relato Manchado", "pos": Vector2(1840, FLOOR_Y - 20), "amount": 3, "taken": false}
+		],
+		"npcs": [
+			{"name": "Elric", "pos": Vector2(310, FLOOR_Y), "lines": ["Aqui as cinco bencaos nao escolhem rei. Escolhem preco.", "Se vencer, William, nao saia daqui igual ao homem que entrou."]},
+			{"name": "Albert", "pos": Vector2(440, FLOOR_Y), "lines": ["O Conselho vai querer uma resposta simples.", "Nao de a eles uma mentira bonita."]}
+		],
+		"message": "O Reliquiario Sanctis abre sob Gradon como uma memoria que esperou seculos para acusar alguem."
 	}
 ]
 
@@ -261,8 +376,8 @@ var screen_flow := [
 	{"id": "character_create", "title": "3. Forja de Herdeiros", "function": "Nome, origem, classe e personagem base."},
 	{"id": "main_menu", "title": "4. Sala do Conselho", "function": "Novo jogo, carregar, sistemas ou fluxo."},
 	{"id": "systems", "title": "5. Arquivos de Gradon", "function": "Inventario, arsenal, mapa, loja, forja, codex, ajustes e banco."},
-	{"id": "game", "title": "6. Campanha", "function": "Fases em sequencia: Wood, Gradon, Conselho, Forja e Michael."},
-	{"id": "victory", "title": "7. Conclusao do arco", "function": "Fecha a sequencia atual e salva progresso."}
+	{"id": "game", "title": "6. Campanha", "function": "Fases em sequencia: Wood, Gradon, Conselho, Forja, Ducados, Michael, Umbrae e Sanctis."},
+	{"id": "victory", "title": "7. Conclusao do arco", "function": "Fecha a sequencia atual e salva progresso para o proximo ato."}
 ]
 var main_menu_options := ["Novo Jogo", "Carregar", "Criar Personagem", "Sistemas", "Fluxo de Telas", "Sair"]
 var system_overlay_order := ["inventory", "equipment", "character", "quests", "map", "forge", "shop", "settings", "codex", "direction", "database", "flow"]
@@ -301,11 +416,11 @@ var shop_items := [
 	{"name": "Relato Manchado", "price": 45, "sell": 18, "description": "item de lore e troca"}
 ]
 var story_improvements := [
-	"Prologo com 3 escolhas claras: salvar companheiro, perseguir inimigo ou proteger civis.",
-	"Lealdade e coragem devem alterar dialogos de Ethan, Donovan, Albert, Hilda e Elric.",
-	"Gradon deve virar hub com Conselho, Forja, Aposentos Militares e missao principal.",
-	"Marcas Divinas precisam ter custo narrativo, nao apenas cooldown de combate.",
-	"Cada personagem base deve desbloquear uma perspectiva extra em dialogos e Codex."
+	"Arco Wood: queda do exercito, despertar da Marca Divina e prova inicial de sobrevivencia.",
+	"Arco Gradon: portoes, Conselho, Forja e primeira disputa politica entre duques.",
+	"Arco dos Ducados: Roberts, Armand e Legrand mostram fome, motim e fe falsificada.",
+	"Arco Michael: fortaleza, aldeia das Umbrae e contratos de nomes roubados por Stipulation.",
+	"Final Sanctis: William vence a Vox, mas aprende que a coroa tambem pode corromper."
 ]
 var gameplay_improvements := [
 	"Telegraph visual antes de cada ataque inimigo para o jogador reagir.",
@@ -384,6 +499,66 @@ var scene_scripts := {
 			"William: Entao seguimos pelo que ainda responde.",
 			"Corvus Stipulation: Toda coroa projeta sombra. A sua apenas aprendeu a falar."
 		]
+	},
+	"roberts_grain_road": {
+		"intro": "Depois de sobreviver a Michael, William precisa provar que tambem sabe proteger gente comum. Os celeiros de Roberts queimam sem chama visivel.",
+		"battle": "Cena de protecao: priorize inimigos que atacam suprimentos. Usar Item e Guarda preserva lealdade narrativa.",
+		"clear": "Os celeiros sobrevivem. Entre cinzas, Albert encontra moedas de Michael misturadas com selos falsos de Legrand.",
+		"lines": [
+			"Albert: Uma mentira boa sempre tem duas assinaturas falsas.",
+			"William: Entao alguem quer guerra entre os duques.",
+			"Camponesa de Roberts: Se o herdeiro protege o pao, talvez ainda proteja o reino."
+		]
+	},
+	"armand_barracks": {
+		"intro": "No Quartel de Armand, soldados fieis recebem ordens contraditorias. A corrupcao nao grita; ela assina decretos.",
+		"battle": "Cena de disciplina: derrotar capitaes primeiro reduz pressao. Guardar turnos aumenta a sensacao de duelo militar.",
+		"clear": "Donovan quebra a mesa de ordens falsas. Os soldados recuperam o juramento e marcham por William, nao por medo.",
+		"lines": [
+			"Donovan: Um comandante que precisa mentir ja perdeu metade do exercito.",
+			"Soldado de Armand: Eu obedeci ao selo, nao a verdade.",
+			"William: De hoje em diante, selo nenhum vale mais que gente viva."
+		]
+	},
+	"legrand_chapel": {
+		"intro": "A Capela de Legrand recebe diplomatas e culpados. A luz dos vitrais desenha asas onde nao deveria haver corpo.",
+		"battle": "Cena de fe e leitura: inimigos de Stipulation confundem alvo; use Marca Divina quando a intencao ficar perigosa.",
+		"clear": "O sino partido revela uma lista de nomes apagados do Conselho. Elric percebe que a Marca de Satiae foi falsificada.",
+		"lines": [
+			"Elric: Conhecimento roubado nao ilumina. Ele vigia.",
+			"William: Se Legrand caiu, caiu tentando parecer inocente.",
+			"Voz no vitral: Toda paz custa um nome que ninguem lembra."
+		]
+	},
+	"michael_keep": {
+		"intro": "A Fortaleza Michael e menos castelo que armadilha. Cada corredor oferece uma resposta facil demais.",
+		"battle": "Cena de infiltracao: alterne alvos para impedir que o Guardiao Corvus acumule vantagem.",
+		"clear": "No arquivo escuro, Ethan encontra contratos assinados por mortos e vivos. Michael vendeu neutralidade para Stipulation.",
+		"lines": [
+			"Ethan: Achei seu nome em tres lugares. Dois deles dizem que voce ja morreu.",
+			"William: Entao a sombra nao quer me matar. Quer me substituir.",
+			"Guardiao Corvus: Um reino obedece melhor quando nem o rei sabe quem e."
+		]
+	},
+	"umbrae_village": {
+		"intro": "A Aldeia das Umbrae mostra o custo real da intriga: pessoas usadas como portas para monstros que nao escolheram nascer.",
+		"battle": "Cena moral: sobreviva sem gastar tudo. A vitoria deve parecer resgate, nao execucao.",
+		"clear": "Hilda interrompe o circulo ritual. Algumas sombras fogem; outras viram nomes outra vez.",
+		"lines": [
+			"Hilda: Dizer que alguem esta perdido e o jeito mais rapido de abandona-lo.",
+			"William: Entao abrimos caminho para voltar, nao apenas para vencer.",
+			"Superior Umbrae: Misericordia e uma porta. Stipulation tambem sabe entrar por ela."
+		]
+	},
+	"sanctis_reliquary": {
+		"intro": "Sob Gradon, o Reliquiario Sanctis guarda as cinco bencaos. A Marca Divina pede escolha, nao obediencia.",
+		"battle": "Final do arco: use tudo que aprendeu. Ataque leve conserva turno, golpe forte quebra chefe, Guarda e Esquiva leem a Vox.",
+		"clear": "A Vox Stipulation cai sem desaparecer. William salva Gradon por enquanto, mas entende que a coroa tambem pode corromper.",
+		"lines": [
+			"Elric: A marca nao escolhe um santo. Ela revela o que alguem faz quando recebe poder.",
+			"Albert: O Conselho vai chamar isso de milagre se puder controlar a historia.",
+			"William: Entao a primeira lei do meu reinado sera lembrar dos nomes que tentaram apagar."
+		]
 	}
 }
 var world_lore := {
@@ -416,7 +591,13 @@ var world_lore := {
 	"Umbrae Maleficae": "Senhoras das sombras e rituais do Ato 3. Manipulam aldeias, medo e sacrificios para Stipulation.",
 	"Superiores Umbrae Maleficae": "Lider das Umbrae e porta-voz de Stipulation no ducado Michael.",
 	"Mulier Umbris Consumptae": "Mulheres sacrificadas por bencaos sombrias, condenadas a vagar gritando maldicoes.",
-	"Qui Decepti Sunt": "Homens enganados por promessas de poder. Tornam-se servos palidos, de olhos escuros, presos a obediencia."
+	"Qui Decepti Sunt": "Homens enganados por promessas de poder. Tornam-se servos palidos, de olhos escuros, presos a obediencia.",
+	"Estrada de Roberts": "Cena de protecao dos celeiros. Mostra que o conflito nao e so militar: fome e opiniao popular tambem vencem ou perdem reinos.",
+	"Quartel de Armand": "Cena de disciplina e motim. Soldados recebem ordens falsas para transformar dever em violencia contra Gradon.",
+	"Capela de Legrand": "Cena de diplomacia religiosa. Vitrais e sinos escondem nomes apagados do Conselho e uma falsificacao da Marca de Satiae.",
+	"Fortaleza Michael": "Cena de infiltracao. Michael guarda contratos de neutralidade comprada e registros que tentam substituir a identidade de William.",
+	"Aldeia das Umbrae": "Cena moral. William precisa vencer sem tratar todos os corrompidos como culpados, reforcando misericordia e custo da Marca.",
+	"Reliquiario Sanctis": "Final do arco atual. As cinco bencaos testam o herdeiro, e a Vox Stipulation tenta transformar coroa em obediencia absoluta."
 }
 var quality_profile_order := ["Compatibilidade", "Baixo", "Medio", "Alto", "Ultra"]
 var quality_profiles := {
@@ -2526,9 +2707,9 @@ func _check_map_exit() -> void:
 			_begin_map_load(map_index + 1, "map_exit")
 		else:
 			victory = true
-			_record_action("prologue_completed", {"map": maps[map_index].id})
+			_record_action("chapter_arc_completed", {"map": maps[map_index].id, "scenes": maps.size()})
 			_save_game()
-			_show_banner("Prologo concluido: Gradon aguarda William.")
+			_show_banner("Arco Sanctis concluido: Gradon lembra os nomes apagados.")
 
 
 func _update_checkpoint() -> void:
@@ -2631,7 +2812,7 @@ func _panel_text() -> String:
 	if not game_started:
 		return _frontend_panel_text()
 	if victory:
-		return "GRADON\n\nWilliam sobreviveu ao prologo da Floresta Wood.\n\nInventario preservado, checkpoint salvo, rota pronta para os proximos capitulos."
+		return "GRADON\n\nWilliam atravessou Wood, os ducados, Michael, as Umbrae e o Reliquiario Sanctis.\n\nInventario preservado, checkpoint salvo, rota pronta para o proximo ato."
 	if dialogue.active:
 		return "%s\n\n%s" % [dialogue.name, dialogue.lines[dialogue.index]]
 	if overlay == "pause":
@@ -3028,7 +3209,27 @@ func _draw_background() -> void:
 	var load_factor := _graphics_load_factor()
 	var motion := 1.0 if bool(game_settings.animated_background) else 0.0
 	var contrast := bool(game_settings.high_contrast)
-	var sky: Color = [Color("#121519"), Color("#161b1e"), Color("#100f14")][map_index]
+	var scene_id := String(maps[map_index].get("id", ""))
+	var sky_palette: Array[Color] = [
+		Color("#121519"),
+		Color("#161b1e"),
+		Color("#100f14"),
+		Color("#18150f"),
+		Color("#141820"),
+		Color("#10151b"),
+		Color("#070910")
+	]
+	var sky: Color = sky_palette[map_index % sky_palette.size()]
+	if scene_id.contains("roberts"):
+		sky = Color("#191810")
+	elif scene_id.contains("armand"):
+		sky = Color("#151820")
+	elif scene_id.contains("legrand"):
+		sky = Color("#11151d")
+	elif scene_id.contains("michael") or scene_id.contains("umbrae"):
+		sky = Color("#070910")
+	elif scene_id.contains("sanctis"):
+		sky = Color("#0d1017")
 	if contrast:
 		sky = sky.darkened(0.22)
 	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), sky)
@@ -3053,16 +3254,20 @@ func _draw_background() -> void:
 	for i in range(-1, max(3, int(round(float(profile.trees) * load_factor)))):
 		var x2 := tree_offset + i * 180
 		var tree_color := Color("#31523d") if contrast else Color("#26372d")
-		if map_index == 1:
+		if map_index == 1 or scene_id.contains("roberts"):
 			tree_color = Color("#4a382f") if contrast else Color("#342d2a")
+		elif scene_id.contains("michael") or scene_id.contains("umbrae"):
+			tree_color = Color("#15231f") if contrast else Color("#101917")
+		elif scene_id.contains("sanctis"):
+			tree_color = Color("#2a2d35") if contrast else Color("#1a1d25")
 		draw_polygon(PackedVector2Array([Vector2(x2, 560), Vector2(x2 + 80, 255), Vector2(x2 + 160, 560)]), PackedColorArray([tree_color]))
 		draw_rect(Rect2(x2 + 73, 390, 14, 170), Color("#231f19"))
-	if map_index == 1:
+	if map_index == 1 or scene_id.contains("roberts") or scene_id.contains("legrand"):
 		for i in range(0, max(1, int(round(float(profile.fires) * load_factor)))):
 			var fx := fmod(i * 210.0 - camera_x * 0.65 * motion, 1380.0) - 50
 			draw_rect(Rect2(fx, FLOOR_Y - 26, 18, 26), Color("#7d3025"))
 			draw_polygon(PackedVector2Array([Vector2(fx - 6, FLOOR_Y - 26), Vector2(fx + 9, FLOOR_Y - 62), Vector2(fx + 24, FLOOR_Y - 26)]), PackedColorArray([Color("#ffd66d", 0.88) if contrast else Color("#d8b45a", 0.72)]))
-	elif map_index == 2:
+	elif map_index == 2 or scene_id.contains("armand") or scene_id.contains("sanctis"):
 		for i in range(0, max(1, int(round(float(profile.debris) * load_factor)))):
 			var bx := fmod(i * 240.0 - camera_x * 0.75 * motion, 1400.0) - 80
 			draw_line(Vector2(bx, FLOOR_Y - 15), Vector2(bx + 56, FLOOR_Y - 58), Color("#4b3a2a"), 5)
@@ -4063,7 +4268,9 @@ func _run_smoke_test() -> void:
 	shop_index = 0
 	_buy_selected_shop_item()
 	assert(int(player.inventory.get("Racao", 0)) >= 1)
-	assert(maps.size() == 3)
+	assert(maps.size() >= 13)
+	for scene_id in scene_scripts.keys():
+		assert(maps.any(func(m): return String(m.id) == String(scene_id)))
 	for idx in range(maps.size()):
 		_load_map(idx)
 		_update_ui()
