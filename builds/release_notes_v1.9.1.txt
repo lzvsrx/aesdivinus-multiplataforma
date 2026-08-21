@@ -1,0 +1,7 @@
+AESDIVINUS v1.9.1
+
+- Novo icone premium do jogo para Android, iOS, Windows e Linux.
+- Icone redesenhado com coroa quebrada, espada central, Marca Divina, floresta escura e brilho sagrado teal/dourado.
+- Android ajustado com foreground adaptativo transparente e background proprio para evitar cortes em launchers.
+- PNGs gerados nos tamanhos usados por iOS/iPad, Android, Windows e Linux.
+- Android atualizado para versionCode 33 e versionName 1.9.1.
