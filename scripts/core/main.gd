@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.9.1"
+const BUILD_VERSION := "1.9.2"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -810,23 +810,29 @@ func _touch_buttons() -> Array[Dictionary]:
 		return []
 	if paused or overlay != "" or game_over or victory:
 		return [
-			{"id": "up", "label": "^", "action": "menu_up", "rect": _to_screen_rect(Rect2(78, 442, 70, 58))},
-			{"id": "down", "label": "v", "action": "menu_down", "rect": _to_screen_rect(Rect2(78, 570, 70, 58))},
-			{"id": "left", "label": "<", "action": "menu_left", "rect": _to_screen_rect(Rect2(8, 506, 70, 58))},
-			{"id": "right", "label": ">", "action": "menu_right", "rect": _to_screen_rect(Rect2(148, 506, 70, 58))},
-			{"id": "back", "label": "Q", "action": "divine_mark", "rect": _to_screen_rect(Rect2(998, 598, 86, 62))},
-			{"id": "ok", "label": "OK", "action": "interact", "rect": _to_screen_rect(Rect2(1108, 588, 104, 72))}
+			{"id": "up", "label": "CIMA", "action": "menu_up", "rect": _to_screen_rect(Rect2(70, 438, 82, 58)), "style": "round"},
+			{"id": "down", "label": "BAIXO", "action": "menu_down", "rect": _to_screen_rect(Rect2(70, 570, 82, 58)), "style": "round"},
+			{"id": "left", "label": "ANT.", "action": "menu_left", "rect": _to_screen_rect(Rect2(12, 504, 90, 58)), "style": "round"},
+			{"id": "right", "label": "PROX.", "action": "menu_right", "rect": _to_screen_rect(Rect2(120, 504, 90, 58)), "style": "round"},
+			{"id": "home", "label": "MENU", "command": "main_menu", "rect": _to_screen_rect(Rect2(780, 610, 120, 50)), "style": "wood"},
+			{"id": "back", "label": "VOLTAR", "command": "back", "rect": _to_screen_rect(Rect2(918, 610, 120, 50)), "style": "wood"},
+			{"id": "ok", "label": "OK", "action": "interact", "rect": _to_screen_rect(Rect2(1056, 602, 132, 64)), "style": "gold"}
 		]
 	return [
-		{"id": "left", "label": "ALVO-", "action": "move_left", "rect": _to_screen_rect(Rect2(34, 602, 98, 68))},
-		{"id": "right", "label": "ALVO+", "action": "move_right", "rect": _to_screen_rect(Rect2(148, 602, 98, 68))},
-		{"id": "run", "label": "EXPLORAR", "action": "run", "rect": _to_screen_rect(Rect2(78, 522, 138, 58))},
-		{"id": "mark", "label": "MARCA", "action": "divine_mark", "rect": _to_screen_rect(Rect2(900, 522, 104, 58))},
-		{"id": "jump", "label": "ITEM", "action": "jump", "rect": _to_screen_rect(Rect2(1018, 522, 104, 58))},
-		{"id": "interact", "label": "ACAO", "action": "interact", "rect": _to_screen_rect(Rect2(1136, 522, 104, 58))},
-		{"id": "dodge", "label": "ESQUIVA", "action": "dodge", "rect": _to_screen_rect(Rect2(900, 604, 104, 66))},
-		{"id": "block", "label": "GUARDA", "action": "block", "rect": _to_screen_rect(Rect2(1018, 604, 104, 66))},
-		{"id": "attack", "label": "ATACAR", "action": "attack", "rect": _to_screen_rect(Rect2(1136, 594, 108, 76))}
+		{"id": "left", "label": "ALVO -", "action": "move_left", "rect": _to_screen_rect(Rect2(28, 602, 96, 56)), "style": "round"},
+		{"id": "right", "label": "ALVO +", "action": "move_right", "rect": _to_screen_rect(Rect2(138, 602, 96, 56)), "style": "round"},
+		{"id": "run", "label": "EXPLORAR", "action": "run", "rect": _to_screen_rect(Rect2(64, 526, 152, 54)), "style": "wood"},
+		{"id": "home", "label": "MENU", "command": "pause_menu", "rect": _to_screen_rect(Rect2(300, 624, 112, 46)), "style": "wood"},
+		{"id": "inventory", "label": "BOLSA", "command": "inventory", "rect": _to_screen_rect(Rect2(424, 624, 112, 46)), "style": "wood"},
+		{"id": "shop", "label": "LOJA", "command": "shop", "rect": _to_screen_rect(Rect2(548, 624, 112, 46)), "style": "wood"},
+		{"id": "hammer", "label": "FORJA", "command": "forge", "rect": _to_screen_rect(Rect2(672, 624, 112, 46)), "style": "wood"},
+		{"id": "settings", "label": "OPCOES", "command": "settings", "rect": _to_screen_rect(Rect2(796, 624, 122, 46)), "style": "wood"},
+		{"id": "mark", "label": "MARCA", "action": "divine_mark", "rect": _to_screen_rect(Rect2(930, 512, 112, 54)), "style": "gold"},
+		{"id": "jump", "label": "ITEM", "action": "jump", "rect": _to_screen_rect(Rect2(1054, 512, 96, 54)), "style": "gold"},
+		{"id": "interact", "label": "FORTE", "action": "interact", "rect": _to_screen_rect(Rect2(1162, 512, 96, 54)), "style": "gold"},
+		{"id": "dodge", "label": "ESQUIVA", "action": "dodge", "rect": _to_screen_rect(Rect2(930, 596, 104, 62)), "style": "wood"},
+		{"id": "block", "label": "GUARDA", "action": "block", "rect": _to_screen_rect(Rect2(1044, 596, 104, 62)), "style": "wood"},
+		{"id": "attack", "label": "ATACAR", "action": "attack", "rect": _to_screen_rect(Rect2(1158, 590, 108, 72)), "style": "gold"}
 	]
 
 
@@ -842,9 +848,7 @@ func _handle_touch_input(event: InputEvent) -> void:
 			for button in _touch_buttons():
 				var rect: Rect2 = button.rect
 				if rect.has_point(touch.position):
-					var action := String(button.action)
-					touch_points[touch.index] = action
-					Input.action_press(action)
+					_activate_touch_button(button, touch.index)
 					get_viewport().set_input_as_handled()
 					return
 		else:
@@ -852,6 +856,47 @@ func _handle_touch_input(event: InputEvent) -> void:
 				Input.action_release(String(touch_points[touch.index]))
 				touch_points.erase(touch.index)
 				get_viewport().set_input_as_handled()
+
+
+func _activate_touch_button(button: Dictionary, touch_index: int) -> void:
+	if button.has("command"):
+		_run_touch_command(String(button.command))
+		return
+	var action := String(button.action)
+	touch_points[touch_index] = action
+	Input.action_press(action)
+
+
+func _run_touch_command(command: String) -> void:
+	match command:
+		"pause_menu":
+			_toggle_overlay("pause")
+		"inventory", "shop", "forge", "settings", "equipment", "character", "map", "quests":
+			_toggle_overlay(command)
+		"main_menu":
+			var previous_overlay := overlay
+			_record_action("return_to_main_menu", {"from": previous_overlay, "map_index": map_index})
+			_save_game()
+			game_started = false
+			paused = false
+			game_over = false
+			victory = false
+			_set_overlay("")
+			_set_auth_screen("main_menu")
+			_show_banner("Progresso salvo. Voltou ao menu principal.")
+		"back":
+			if game_over:
+				_reset_game()
+			elif victory:
+				game_started = false
+				_set_auth_screen("main_menu")
+			elif overlay != "":
+				paused = false
+				_set_overlay("")
+			else:
+				_toggle_overlay("pause")
+		_:
+			pass
 
 
 func _handle_frontend_touch(pos: Vector2) -> bool:
@@ -870,22 +915,22 @@ func _frontend_touch_rows() -> Array[Dictionary]:
 		for i in range(5):
 			rows.append({
 				"index": i,
-				"rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)),
-				"visual_rect": _to_screen_rect(Rect2(958, 84 + i * 28, 272, 22)),
+				"rect": _to_screen_rect(Rect2(800, 78 + i * 36, 454, 34)),
+				"visual_rect": _to_screen_rect(Rect2(966, 80 + i * 36, 252, 30)),
 				"activate": i >= 2
 			})
 	elif auth_screen == "character_create":
 		for i in range(4):
 			rows.append({
 				"index": i,
-				"rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)),
-				"visual_rect": _to_screen_rect(Rect2(1048, 84 + i * 28, 182, 22)),
+				"rect": _to_screen_rect(Rect2(800, 78 + i * 36, 454, 34)),
+				"visual_rect": _to_screen_rect(Rect2(1030, 80 + i * 36, 188, 30)),
 				"activate": i > 0
 			})
-		rows.append({"index": 4, "rect": _to_screen_rect(Rect2(800, 214, 454, 42)), "visual_rect": _to_screen_rect(Rect2(1018, 216, 212, 34)), "activate": true})
+		rows.append({"index": 4, "rect": _to_screen_rect(Rect2(800, 224, 454, 42)), "visual_rect": _to_screen_rect(Rect2(998, 224, 220, 38)), "activate": true})
 	elif auth_screen == "main_menu":
 		for i in range(main_menu_options.size()):
-			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 82 + i * 28, 454, 30)), "visual_rect": _to_screen_rect(Rect2(980, 84 + i * 28, 250, 22)), "activate": true})
+			rows.append({"index": i, "rect": _to_screen_rect(Rect2(800, 72 + i * 34, 454, 32)), "visual_rect": _to_screen_rect(Rect2(966, 74 + i * 34, 252, 28)), "activate": true})
 	elif auth_screen == "systems":
 		rows.append({"index": -1, "rect": _to_screen_rect(Rect2(800, 82, 180, 56)), "visual_rect": _to_screen_rect(Rect2(802, 92, 134, 32)), "activate": true})
 		rows.append({"index": 1, "rect": _to_screen_rect(Rect2(1040, 82, 180, 56)), "visual_rect": _to_screen_rect(Rect2(1088, 92, 134, 32)), "activate": true})
@@ -1175,6 +1220,8 @@ func _ensure_runtime_input_actions() -> void:
 		"menu_down": [KEY_S, KEY_DOWN],
 		"menu_left": [KEY_A, KEY_LEFT],
 		"menu_right": [KEY_D, KEY_RIGHT],
+		"inventory": [KEY_I],
+		"map": [KEY_M],
 		"equipment": [KEY_O],
 		"character": [KEY_C],
 		"quests": [KEY_U],
@@ -1184,7 +1231,8 @@ func _ensure_runtime_input_actions() -> void:
 		"codex": [KEY_R],
 		"direction": [KEY_T],
 		"database": [KEY_B],
-		"quick_save": [KEY_F5]
+		"quick_save": [KEY_F5],
+		"ui_cancel": [KEY_ESCAPE]
 	}
 	for action_name in actions.keys():
 		if not InputMap.has_action(action_name):
@@ -3679,7 +3727,7 @@ func _draw_archive_visual(frame: Rect2, screen_name: String) -> void:
 
 
 func _draw_turn_command_bar() -> void:
-	if paused or victory or game_over or not game_started:
+	if paused or victory or game_over or not game_started or _is_touch_build():
 		return
 	var commands: Array[Dictionary] = [
 		{"key": "A/D", "name": "Alvo", "icon": "left"},
@@ -3694,7 +3742,7 @@ func _draw_turn_command_bar() -> void:
 	var base := Vector2(176, 626)
 	for i in range(commands.size()):
 		var rect := Rect2(base + Vector2(i * 112, 0), Vector2(92, 64))
-		_draw_oct_button(rect, String(commands[i].name), String(commands[i].icon), false, Color("#171b17"), Color("#d8b45a"))
+		_draw_game_button(rect, String(commands[i].name), String(commands[i].icon), false, "wood")
 		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, -8), String(commands[i].key), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Color("#f6e7b1"))
 
 
@@ -3731,63 +3779,76 @@ func _draw_touch_controls() -> void:
 
 func _draw_touch_button(button: Dictionary) -> void:
 	var rect: Rect2 = button.rect
-	var action := String(button.action)
 	var label := String(button.label)
 	var id := String(button.id)
-	var pressed := Input.is_action_pressed(action)
-	var center := rect.get_center()
-	var is_direction := action in ["move_left", "move_right", "menu_left", "menu_right", "menu_up", "menu_down"]
-	var is_menu := action in ["interact", "divine_mark"] and (paused or overlay != "" or game_over or victory)
-	if is_direction:
-		_draw_oct_button(rect, label, id, pressed)
-	elif is_menu:
-		_draw_oct_button(rect, label, id, pressed, Color("#24362f"), Color("#d8b45a"))
+	var pressed := button.has("action") and Input.is_action_pressed(String(button.action))
+	_draw_game_button(rect, label, id, pressed, String(button.get("style", "gold")))
+
+
+func _draw_game_button(rect: Rect2, label: String, id: String, pressed: bool, style := "gold") -> void:
+	var draw_rect := rect
+	if pressed:
+		draw_rect.position.y += 2
+	var cut := minf(draw_rect.size.y * 0.28, draw_rect.size.x * 0.12)
+	var points := _oct_points(draw_rect, cut)
+	var inner := draw_rect.grow(-4)
+	var inner_points := _oct_points(inner, maxf(4.0, cut - 3.0))
+	var outer := Color("#5a2518")
+	var face := Color("#b9612a")
+	var shine := Color("#ffca55")
+	var rim := Color("#f3c247")
+	var text_color := Color("#fff4ba")
+	if style == "gold":
+		outer = Color("#6f2b13")
+		face = Color("#d9831f")
+		shine = Color("#ffe05f")
+		rim = Color("#ffd449")
+		text_color = Color("#4b1f12")
+	elif style == "round":
+		var radius := minf(draw_rect.size.x, draw_rect.size.y) * 0.47
+		var center := draw_rect.get_center()
+		draw_circle(center + Vector2(0, 4), radius + 6, Color("#030201", 0.48))
+		draw_circle(center, radius + 5, outer)
+		draw_circle(center, radius + 1, rim)
+		draw_circle(center, radius - 5, face.lightened(0.08 if pressed else 0.18))
+		draw_arc(center + Vector2(-radius * 0.1, -radius * 0.1), radius * 0.58, PI * 1.05, PI * 1.82, 18, Color("#fff2a8", 0.32), 3.0)
+		_draw_touch_icon(id, center + Vector2(0, -4), radius * 0.66, text_color)
+		if label.length() > 0:
+			draw_string(ThemeDB.fallback_font, draw_rect.position + Vector2(0, draw_rect.size.y + 11), label, HORIZONTAL_ALIGNMENT_CENTER, draw_rect.size.x, 11, Color("#f6e7b1"))
+		return
+	draw_polygon(_oct_points(draw_rect.translated(Vector2(0, 5)), cut), PackedColorArray([Color("#030201", 0.46)]))
+	draw_polygon(points, PackedColorArray([outer]))
+	draw_polyline(points + PackedVector2Array([points[0]]), Color("#24100b", 0.88), 3.0)
+	draw_polygon(inner_points, PackedColorArray([face.lightened(0.08 if pressed else 0.16)]))
+	draw_polyline(inner_points + PackedVector2Array([inner_points[0]]), rim, 2.2)
+	var shine_rect := Rect2(inner.position + Vector2(8, 6), Vector2(maxf(8.0, inner.size.x - 16), maxf(5.0, inner.size.y * 0.24)))
+	draw_polygon(_oct_points(shine_rect, minf(shine_rect.size.y * 0.45, 9.0)), PackedColorArray([Color(shine.r, shine.g, shine.b, 0.46 if not pressed else 0.30)]))
+	for i in range(3):
+		var scratch_y := inner.position.y + 12 + i * maxf(7.0, inner.size.y * 0.20)
+		draw_line(Vector2(inner.position.x + 15 + i * 11, scratch_y), Vector2(inner.end.x - 18 - i * 7, scratch_y + 2), Color("#6b321f", 0.22), 1.0)
+	var icon_radius := minf(draw_rect.size.y * 0.34, 18.0)
+	var text_x := draw_rect.position.x
+	var text_width := draw_rect.size.x
+	if draw_rect.size.x >= 84 and id != "menu":
+		var icon_center := draw_rect.position + Vector2(24, draw_rect.size.y * 0.55)
+		draw_circle(icon_center, icon_radius + 6, Color("#542113", 0.62))
+		draw_circle(icon_center, icon_radius + 3, Color("#f3c247", 0.86))
+		draw_circle(icon_center, icon_radius, Color("#9a4f23", 0.92))
+		_draw_touch_icon(id, icon_center, icon_radius * 0.82, text_color)
+		text_x += 38
+		text_width -= 42
 	else:
-		var radius := minf(rect.size.x, rect.size.y) * (0.48 if id == "attack" else 0.43)
-		var fill := Color("#17241f", 0.72)
-		var rim := Color("#d8b45a", 0.78)
-		match id:
-			"attack":
-				fill = Color("#4a2619", 0.82)
-				rim = Color("#f0c35e", 0.96)
-			"block":
-				fill = Color("#172432", 0.76)
-				rim = Color("#9fd6ff", 0.82)
-			"dodge":
-				fill = Color("#17342f", 0.74)
-				rim = Color("#76d9c8", 0.82)
-			"mark":
-				fill = Color("#1c1b13", 0.78)
-				rim = Color("#d8b45a", 0.92)
-			"jump":
-				fill = Color("#24230f", 0.74)
-			"interact":
-				fill = Color("#1d261d", 0.74)
-		if pressed:
-			radius *= 0.94
-			fill = fill.lightened(0.12)
-		draw_circle(center + Vector2(0, 3), radius + 8, Color("#020302", 0.46))
-		draw_circle(center, radius + 5, Color("#050605", 0.68))
-		draw_circle(center, radius, fill)
-		draw_arc(center, radius + 3, 0, TAU, 56, rim, 3.2)
-		draw_arc(center, radius - 8, -PI * 0.25, TAU * 0.72, 42, Color("#f6e7b1", 0.18 if not pressed else 0.32), 2.0)
-		_draw_touch_icon(id, center + Vector2(0, -5), radius, Color("#f6e7b1"))
-		_draw_button_caption(rect, label, 13 if label.length() >= 6 else 14, Color("#f6e7b1"))
+		_draw_touch_icon(id, draw_rect.get_center() + Vector2(0, -2), icon_radius, text_color)
+	var font_size := 16
+	if label.length() >= 8:
+		font_size = 13
+	elif label.length() >= 6:
+		font_size = 14
+	draw_string(ThemeDB.fallback_font, Vector2(text_x, draw_rect.position.y + draw_rect.size.y * 0.61 + font_size * 0.36), label, HORIZONTAL_ALIGNMENT_CENTER, text_width, font_size, text_color)
 
 
 func _draw_oct_button(rect: Rect2, label: String, id: String, pressed: bool, fill := Color("#171b17"), rim := Color("#d8b45a")) -> void:
-	var bg := Color(fill.r, fill.g, fill.b, 0.66 if pressed else 0.50)
-	var border := Color(rim.r, rim.g, rim.b, 0.92 if pressed else 0.62)
-	var points := _oct_points(rect, minf(rect.size.x, rect.size.y) * 0.18)
-	var inner_points := _oct_points(rect.grow(-4), minf(rect.size.x, rect.size.y) * 0.16)
-	draw_polygon(points, PackedColorArray([Color("#020302", 0.48)]))
-	draw_polyline(points + PackedVector2Array([points[0]]), Color("#020302", 0.72), 6)
-	draw_polygon(inner_points, PackedColorArray([bg]))
-	draw_polyline(inner_points + PackedVector2Array([inner_points[0]]), border, 2.5)
-	var icon_color := Color("#f6e7b1")
-	if id != "menu":
-		_draw_touch_icon(id, rect.get_center() + Vector2(0, -4), minf(rect.size.x, rect.size.y) * 0.34, icon_color)
-	_draw_button_caption(rect, label, 14 if label.length() < 4 else 12, icon_color)
+	_draw_game_button(rect, label, id, pressed, "wood")
 
 
 func _draw_touch_icon(id: String, center: Vector2, radius: float, color: Color) -> void:
@@ -3813,6 +3874,42 @@ func _draw_touch_icon(id: String, center: Vector2, radius: float, color: Color) 
 			draw_polygon(PackedVector2Array([center + Vector2(-radius * 0.42, radius * 0.18), center + Vector2(-radius * 0.12, radius * 0.06), center + Vector2(-radius * 0.25, radius * 0.36)]), PackedColorArray([color]))
 		"mark":
 			_draw_divine_star(center, radius * 0.34)
+		"home":
+			draw_polygon(PackedVector2Array([center + Vector2(-radius * 0.44, -radius * 0.02), center + Vector2(0, -radius * 0.42), center + Vector2(radius * 0.44, -radius * 0.02)]), PackedColorArray([color]))
+			draw_rect(Rect2(center.x - radius * 0.30, center.y - radius * 0.02, radius * 0.60, radius * 0.42), color)
+			draw_rect(Rect2(center.x - radius * 0.08, center.y + radius * 0.14, radius * 0.16, radius * 0.26), Color("#5a2518"))
+		"inventory":
+			draw_rect(Rect2(center.x - radius * 0.38, center.y - radius * 0.18, radius * 0.76, radius * 0.48), color)
+			draw_rect(Rect2(center.x - radius * 0.24, center.y - radius * 0.36, radius * 0.48, radius * 0.22), Color("#f3c247"))
+			draw_line(center + Vector2(-radius * 0.22, radius * 0.02), center + Vector2(radius * 0.22, radius * 0.02), Color("#5a2518"), w)
+		"shop":
+			draw_rect(Rect2(center.x - radius * 0.38, center.y - radius * 0.12, radius * 0.68, radius * 0.36), color)
+			draw_circle(center + Vector2(-radius * 0.20, radius * 0.32), radius * 0.10, color)
+			draw_circle(center + Vector2(radius * 0.22, radius * 0.32), radius * 0.10, color)
+			draw_line(center + Vector2(-radius * 0.18, -radius * 0.34), center + Vector2(radius * 0.38, -radius * 0.34), color, w * 1.2)
+			draw_line(center + Vector2(radius * 0.38, -radius * 0.34), center + Vector2(radius * 0.28, -radius * 0.10), color, w * 1.2)
+		"hammer":
+			draw_line(center + Vector2(-radius * 0.34, radius * 0.34), center + Vector2(radius * 0.26, -radius * 0.26), color, w * 1.8)
+			draw_polygon(PackedVector2Array([center + Vector2(radius * 0.10, -radius * 0.44), center + Vector2(radius * 0.46, -radius * 0.08), center + Vector2(radius * 0.30, radius * 0.08), center + Vector2(-radius * 0.06, -radius * 0.28)]), PackedColorArray([color]))
+		"settings":
+			draw_circle(center, radius * 0.34, color)
+			draw_circle(center, radius * 0.14, Color("#5a2518"))
+			for i in range(8):
+				var a := TAU * float(i) / 8.0
+				var p1 := center + Vector2(cos(a), sin(a)) * radius * 0.38
+				var p2 := center + Vector2(cos(a), sin(a)) * radius * 0.54
+				draw_line(p1, p2, color, w * 1.35)
+		"ok":
+			draw_line(center + Vector2(-radius * 0.40, radius * 0.02), center + Vector2(-radius * 0.12, radius * 0.30), color, w * 1.7)
+			draw_line(center + Vector2(-radius * 0.12, radius * 0.30), center + Vector2(radius * 0.42, -radius * 0.34), color, w * 1.7)
+		"back":
+			draw_polygon(PackedVector2Array([center + Vector2(-radius * 0.42, 0), center + Vector2(-radius * 0.06, -radius * 0.34), center + Vector2(-radius * 0.06, -radius * 0.12), center + Vector2(radius * 0.42, -radius * 0.12), center + Vector2(radius * 0.42, radius * 0.12), center + Vector2(-radius * 0.06, radius * 0.12), center + Vector2(-radius * 0.06, radius * 0.34)]), PackedColorArray([color]))
+		"run":
+			draw_line(center + Vector2(-radius * 0.36, radius * 0.24), center + Vector2(radius * 0.18, -radius * 0.30), color, w * 1.5)
+			draw_polygon(PackedVector2Array([center + Vector2(radius * 0.30, -radius * 0.42), center + Vector2(radius * 0.42, -radius * 0.08), center + Vector2(radius * 0.08, -radius * 0.20)]), PackedColorArray([color]))
+			draw_line(center + Vector2(-radius * 0.08, radius * 0.04), center + Vector2(radius * 0.30, radius * 0.34), color, w)
+		"play":
+			draw_polygon(PackedVector2Array([center + Vector2(-radius * 0.24, -radius * 0.42), center + Vector2(radius * 0.42, 0), center + Vector2(-radius * 0.24, radius * 0.42)]), PackedColorArray([color]))
 		"interact":
 			draw_circle(center, radius * 0.18, color)
 			draw_arc(center, radius * 0.42, -PI * 0.15, PI * 1.15, 28, color, w)
@@ -3855,12 +3952,14 @@ func _draw_frontend_touch_targets() -> void:
 		var selected := _frontend_touch_row_selected(index)
 		var label := _frontend_touch_row_label(index)
 		var actionable := bool(row.get("activate", true))
+		var icon := _frontend_touch_row_icon(index)
+		var style := "gold" if actionable else "wood"
 		var fill := Color("#101612", 0.68 if selected else 0.44)
 		var rim := Color("#d8b45a", 0.84 if selected else 0.42)
 		if not actionable:
 			fill = Color("#0b1110", 0.36)
 			rim = Color("#76d9c8", 0.34)
-		_draw_oct_button(_expand_rect(rect, Vector2(1, 2)), label, "menu", selected, fill, rim)
+		_draw_game_button(_expand_rect(rect, Vector2(1, 2)), label, icon, selected, style)
 	draw_set_transform(_stage_offset(), 0.0, Vector2.ONE)
 
 
@@ -3904,6 +4003,26 @@ func _frontend_touch_row_label(index: int) -> String:
 				return "PROX."
 			return "VOLTAR"
 	return "OK"
+
+
+func _frontend_touch_row_icon(index: int) -> String:
+	match auth_screen:
+		"login":
+			return ["inventory", "settings", "play", "inventory", "right"][clampi(index, 0, 4)]
+		"register":
+			return ["inventory", "inventory", "settings", "ok", "back"][clampi(index, 0, 4)]
+		"character_create":
+			return ["inventory", "mark", "attack", "map", "play"][clampi(index, 0, 4)]
+		"main_menu":
+			var icons := ["play", "right", "inventory", "settings", "map", "back"]
+			return icons[clampi(index, 0, icons.size() - 1)]
+		"systems":
+			if index < 0:
+				return "left"
+			if index == 1:
+				return "right"
+			return "back"
+	return "ok"
 
 
 func _draw_loading_screen() -> void:

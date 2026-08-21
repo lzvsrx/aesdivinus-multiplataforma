@@ -1,0 +1,7 @@
+AESDIVINUS v1.9.2
+
+- Botoes redesenhados em estilo RPG madeira/ouro, inspirados nas referencias enviadas.
+- Controles de turno com nomes e simbolos: Alvo, Explorar, Atacar, Forte, Guarda, Esquiva, Marca e Item.
+- Atalhos de toque adicionados para Menu, Bolsa, Loja, Forja e Opcoes durante a campanha.
+- Botoes de login, cadastro, criacao de personagem e menu principal agora usam simbolos claros.
+- Barra desktop e controles mobile foram separados para evitar duplicacao visual em Android/iPad.
