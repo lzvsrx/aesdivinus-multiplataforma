@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.6.3"
+const BUILD_VERSION := "1.7.0"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -213,7 +213,11 @@ var main_menu_index := 0
 var turn_target_index := 0
 var turn_guarding := false
 var turn_evading := false
+var turn_count := 1
+var turn_phase := "player"
 var turn_log := "Escolha uma acao de turno."
+var turn_history: Array[String] = []
+var scene_clear_logged := false
 var inventory_index := 0
 var settings_index := 0
 var equipment_index := 0
@@ -310,6 +314,78 @@ var gameplay_improvements := [
 	"Inimigos por arquetipo: patrulheiro, rapido, pesado, distancia e chefe.",
 	"Opcoes de acessibilidade: texto maior, alto contraste, remapeamento, indicador visual para sons importantes."
 ]
+var scene_scripts := {
+	"wood_forest_01": {
+		"intro": "A noite cai antes da hora. William, Ethan e a escolta entram na Floresta Wood quando a Marca Divina acende no peito do herdeiro.",
+		"battle": "Tutorial de turno: escolha o alvo, ataque, proteja-se e leia a intencao dos corrompidos.",
+		"clear": "A primeira trilha fica em silencio. Ethan aponta marcas recentes no barro: alguem abriu caminho ate Gradon.",
+		"lines": [
+			"Ethan: A floresta nao esta viva assim desde a guerra dos duques.",
+			"Ethan: Se a Marca responder, use-a contra os que perderam a propria alma.",
+			"William: Entao cada turno precisa contar."
+		]
+	},
+	"wood_forest_02": {
+		"intro": "O cavalo de William cai. Batedores barbaros cercam a rota, e um Canis Ferox fareja o sangue Aes.",
+		"battle": "Ensino de ritmo: ataque leve gasta pouco, golpe forte quebra inimigos resistentes, esquiva vence feras rapidas.",
+		"clear": "A emboscada termina, mas a fogueira inimiga revela simbolos de Bellinis e Stipulation no mesmo acampamento.",
+		"lines": [
+			"Hilda: Feras atacam primeiro onde voce duvida.",
+			"Donovan: Guarda firme economiza vida. Vida economizada vence batalha longa.",
+			"Albert: Dois cultos juntos nao sao acaso. E politica vestida de monstro."
+		]
+	},
+	"wood_forest_03": {
+		"intro": "A guarda imperial se dispersa. Donovan, Albert, Hilda e Elric seguram o corredor enquanto um Ogre Larva Belli surge dos mortos.",
+		"battle": "Chefe: alterne Guarda, Item e Marca Divina. Ataque pesado quando o Ogre preparar esmagamento.",
+		"clear": "O Ogre cai, deixando o Relato Manchado. Gradon ainda existe no horizonte, mas ja nao parece segura.",
+		"lines": [
+			"Donovan: Nao salve todos sozinho, principe. Salve o futuro primeiro.",
+			"Elric: Milagre sem controle vira coleira.",
+			"Hilda: Se Michael esta por tras disso, os portoes vao mentir antes de abrir."
+		]
+	},
+	"gradon_gate": {
+		"intro": "Gradon surge entre fumaca, sinos e portoes fechados. Guardas marcados negam reconhecer o herdeiro.",
+		"battle": "Portoes: derrote arautos e preserve lealdade para entrar com apoio popular.",
+		"clear": "Os sinos mudam de tom. O portao abre apenas o suficiente para uma promessa: o Conselho ouvira William.",
+		"lines": [
+			"Albert: Portao nenhum abre para medo. Abra com prova.",
+			"William: Entao que o relato fale antes da espada.",
+			"Ethan: Se a sombra nao tiver sombra, nao e nossa guarda."
+		]
+	},
+	"gradon_council": {
+		"intro": "A Sala do Conselho vira tribunal. Duques exigem obediencia enquanto a Marca de Stipulation se move entre discursos.",
+		"battle": "Conselho: inimigos testam Honra e Fe. Vencer aqui tambem salva a reputacao de William.",
+		"clear": "A mentira perde forma. O Conselho nao absolve William, mas entrega uma rota ate a Forja de Robert.",
+		"lines": [
+			"Donovan: Palavras tambem sao escudos.",
+			"Elric: A sombra sem corpo passou por este salao.",
+			"Albert: Hoje voce nao precisa vencer todos. Precisa impedir que mintam sozinhos."
+		]
+	},
+	"robert_forge": {
+		"intro": "Robert Smith prepara metal verde-dourado. A Forja pulsa como se lembrasse das antigas bencaos.",
+		"battle": "Forja: colete materiais, crie armas Aes e melhore equipamento antes dos marcados fortes.",
+		"clear": "A primeira arma Aes responde a Marca. Agora William pode ferir corrupcao que antes ignorava ferro comum.",
+		"lines": [
+			"Hilda: A lanca certa mantem o medo longe.",
+			"Robert Smith: Metal bom nao grita. Ele espera a mao certa.",
+			"William: Entao forjamos menos odio e mais resposta."
+		]
+	},
+	"michael_shadow_woods": {
+		"intro": "A Floresta sem Luz apaga tochas, nomes e promessas. O dominio Michael observa sem respirar.",
+		"battle": "Michael: leia intencoes, use Codex e alterne alvo. Corvus Stipulation pune repeticao.",
+		"clear": "Corvus recua para o escuro. O prologo termina com uma certeza: Gradon foi atacada por dentro.",
+		"lines": [
+			"Ethan: Aqui a floresta nao devolve ecos.",
+			"William: Entao seguimos pelo que ainda responde.",
+			"Corvus Stipulation: Toda coroa projeta sombra. A sua apenas aprendeu a falar."
+		]
+	}
+}
 var world_lore := {
 	"Homis Corruption": "Humanos unidos aos deuses corrompidos ou usados em rituais. Atacam viajantes, soldados isolados e esquadroes nas florestas.",
 	"Homis Corruption Barbaros": "Barbaros corrompidos e abencoados por anjos traidores. Usam armaduras simples e avancam nas invasoes para abrir caminho pelo caos.",
@@ -979,7 +1055,11 @@ func _load_map(idx: int) -> void:
 	turn_target_index = 0
 	turn_guarding = false
 	turn_evading = false
-	turn_log = "Turno do herdeiro: escolha Atacar, Guarda, Esquiva, Marca, Item ou Explorar."
+	turn_count = 1
+	turn_phase = "player"
+	scene_clear_logged = false
+	turn_history = []
+	turn_log = _scene_intro_text()
 	enemies = []
 	items = []
 	npcs = []
@@ -997,7 +1077,8 @@ func _load_map(idx: int) -> void:
 	for npc in data.npcs:
 		npcs.append(npc.duplicate(true))
 	boss_mode = false
-	_show_banner(data.message)
+	_push_turn_log(String(data.message))
+	_push_turn_log(_scene_battle_text())
 
 
 func _begin_map_load(idx: int, reason := "campaign") -> void:
@@ -1287,6 +1368,48 @@ func _screen_display_name(name: String) -> String:
 		"victory": "CONCLUSAO"
 	}
 	return names.get(name, name.to_upper())
+
+
+func _current_scene_script() -> Dictionary:
+	var map_id := String(maps[map_index].get("id", ""))
+	return scene_scripts.get(map_id, {})
+
+
+func _scene_intro_text() -> String:
+	return String(_current_scene_script().get("intro", String(maps[map_index].get("message", ""))))
+
+
+func _scene_battle_text() -> String:
+	return String(_current_scene_script().get("battle", String(maps[map_index].get("goal", ""))))
+
+
+func _scene_clear_text() -> String:
+	return String(_current_scene_script().get("clear", "Cena concluida. O caminho seguinte foi aberto."))
+
+
+func _scene_dialogue_lines() -> Array:
+	return Array(_current_scene_script().get("lines", []))
+
+
+func _enemy_intent(enemy: Dictionary) -> String:
+	match String(enemy.get("type", "")):
+		"canis":
+			return "investida rapida"
+		"servi":
+			return "agarrao corrompido"
+		"ignis":
+			return "fogo ritual"
+		"boss":
+			return "esmagamento pesado"
+	return "corte frontal"
+
+
+func _push_turn_log(value: String) -> void:
+	turn_log = value
+	turn_history.append("T%d %s: %s" % [turn_count, turn_phase, value])
+	if turn_history.size() > 6:
+		turn_history.pop_front()
+	_show_banner(value)
 
 
 func _apply_character_template() -> void:
@@ -1909,13 +2032,11 @@ func _current_turn_target() -> Dictionary:
 func _cycle_turn_target(step: int) -> void:
 	var living := _living_enemies()
 	if living.is_empty():
-		turn_log = "Nao ha inimigos. Use Explorar para seguir pela floresta."
-		_show_banner(turn_log)
+		_push_turn_log("Nao ha inimigos. Use Explorar para seguir pela floresta.")
 		return
 	turn_target_index = wrapi(turn_target_index + step, 0, living.size())
 	var target := _current_turn_target()
-	turn_log = "Alvo: %s." % String(target.get("name", "Inimigo"))
-	_show_banner(turn_log)
+	_push_turn_log("Alvo: %s. Intencao: %s." % [String(target.get("name", "Inimigo")), _enemy_intent(target)])
 	_focus_turn_camera()
 
 
@@ -1960,13 +2081,11 @@ func _turn_base_damage(heavy: bool) -> int:
 func _player_turn_attack(heavy: bool) -> void:
 	var target := _current_turn_target()
 	if target.is_empty():
-		turn_log = "Nada para atacar. Explore o caminho."
-		_show_banner(turn_log)
+		_push_turn_log("Nada para atacar. Explore o caminho.")
 		return
 	var cost := 24.0 if heavy else 10.0
 	if player.stamina < cost:
-		turn_log = "Sem stamina. Use Guarda, Item ou Explorar."
-		_show_banner(turn_log)
+		_push_turn_log("Sem stamina. Use Guarda, Item ou Explorar.")
 		return
 	turn_guarding = false
 	turn_evading = false
@@ -1980,8 +2099,7 @@ func _player_turn_attack(heavy: bool) -> void:
 		damage += 18 + int(player.weapon_levels.get(weapon_name, 1)) * 3
 		_float_text(target.pos + Vector2(0, -106), "AES", Color("#79d7a5"))
 	_damage_enemy(target, damage, player.facing)
-	turn_log = "%s golpeia %s por %d." % [character_profile.name, String(target.get("name", "inimigo")), damage]
-	_show_banner(turn_log)
+	_push_turn_log("%s usa %s em %s por %d." % [character_profile.name, "Golpe Forte" if heavy else "Atacar", String(target.get("name", "inimigo")), damage])
 	_spawn_spark(target.pos + Vector2(0, -40), Color("#f0d06a"))
 	_after_player_turn()
 
@@ -1991,49 +2109,42 @@ func _player_turn_guard() -> void:
 	turn_evading = false
 	player.state = "BLOCK"
 	player.stamina = minf(100, player.stamina + 18 + int(player.skills.get("Defesa", 0)) * 2)
-	turn_log = "%s ergue a guarda e recupera folego." % character_profile.name
-	_show_banner(turn_log)
+	_push_turn_log("%s ergue a Guarda e recupera folego." % character_profile.name)
 	_after_player_turn()
 
 
 func _player_turn_evade() -> void:
 	if player.stamina < 14:
-		turn_log = "Stamina baixa para esquivar."
-		_show_banner(turn_log)
+		_push_turn_log("Stamina baixa para esquivar.")
 		return
 	turn_guarding = false
 	turn_evading = true
 	player.stamina = maxf(0, player.stamina - 14)
 	player.state = "DODGE"
-	turn_log = "%s prepara uma esquiva curta." % character_profile.name
-	_show_banner(turn_log)
+	_push_turn_log("%s prepara uma Esquiva curta." % character_profile.name)
 	_after_player_turn()
 
 
 func _player_turn_mark() -> void:
 	if player.special_cd > 0 or player.courage < 25:
-		turn_log = "A Marca Divina ainda nao responde."
-		_show_banner(turn_log)
+		_push_turn_log("A Marca Divina ainda nao responde.")
 		return
 	turn_guarding = false
 	turn_evading = false
 	_divine_mark()
-	turn_log = "A Marca Divina pulsa contra a corrupcao."
-	_show_banner(turn_log)
+	_push_turn_log("A Marca Divina pulsa contra a corrupcao.")
 	_after_player_turn()
 
 
 func _player_turn_item() -> void:
 	if int(player.inventory.get("Racao", 0)) <= 0:
-		turn_log = "Sem Racao. Compre ou encontre suprimentos."
-		_show_banner(turn_log)
+		_push_turn_log("Sem Racao. Compre ou encontre suprimentos.")
 		return
 	player.inventory["Racao"] = int(player.inventory.get("Racao", 0)) - 1
 	player.hp = mini(player.max_hp, player.hp + 34 + int(player.instincts.get("Sobrevivencia", 0)) * 4)
 	player.stamina = minf(100, player.stamina + 18)
 	player.state = "ITEM"
-	turn_log = "%s usa Racao e se recompoe." % character_profile.name
-	_show_banner(turn_log)
+	_push_turn_log("%s usa Racao e se recompoe." % character_profile.name)
 	_record_action("turn_item_used", {"item": "Racao", "map": maps[map_index].id})
 	_after_player_turn()
 
@@ -2043,6 +2154,9 @@ func _after_player_turn() -> void:
 	if _living_enemies().is_empty():
 		turn_guarding = false
 		turn_evading = false
+		if not scene_clear_logged:
+			scene_clear_logged = true
+			_push_turn_log(_scene_clear_text())
 		_check_map_exit()
 		_save_game()
 		return
@@ -2051,6 +2165,8 @@ func _after_player_turn() -> void:
 	_focus_turn_camera()
 	if player.hp > 0:
 		player.state = "IDLE"
+		turn_phase = "player"
+		turn_count += 1
 
 
 func _cleanup_turn_targets() -> void:
@@ -2065,6 +2181,7 @@ func _enemy_turn() -> void:
 	var living := _living_enemies()
 	if living.is_empty() or game_over:
 		return
+	turn_phase = "enemy"
 	var attackers := living.slice(0, mini(2, living.size()))
 	for enemy in attackers:
 		_turn_enemy_attack(enemy)
@@ -2092,28 +2209,26 @@ func _turn_enemy_attack(enemy: Dictionary) -> void:
 		var chance := 50 + int(player.skills.get("Agilidade", 0)) * 7 + int(player.instincts.get("Percepcao", 0)) * 5
 		if randi() % 100 < clampi(chance, 45, 85):
 			_float_text(player.pos + Vector2(0, -78), "ESQUIVA", Color("#9fd6ff"))
-			turn_log = "%s erra o ataque." % String(enemy.get("name", "Inimigo"))
+			_push_turn_log("%s erra %s." % [String(enemy.get("name", "Inimigo")), _enemy_intent(enemy)])
 			return
 		damage = maxi(1, int(round(damage * 0.55)))
 	if turn_guarding:
 		damage = maxi(1, int(round(damage * 0.38)) - int(player.skills.get("Defesa", 0)))
 		_float_text(player.pos + Vector2(0, -78), "GUARDA", Color("#9fd6ff"))
 	_damage_player(damage, signi(player.pos.x - float(enemy.pos.x)))
-	turn_log = "%s causa %d de dano." % [String(enemy.get("name", "Inimigo")), damage]
+	_push_turn_log("%s usa %s e causa %d de dano." % [String(enemy.get("name", "Inimigo")), _enemy_intent(enemy), damage])
 
 
 func _turn_explore() -> void:
 	if not _living_enemies().is_empty():
-		turn_log = "Os inimigos bloqueiam o caminho. Vença o turno antes de explorar."
-		_show_banner(turn_log)
+		_push_turn_log("Os inimigos bloqueiam o caminho. Venca o turno antes de explorar.")
 		_enemy_turn()
 		return
 	if _try_nearby_interaction():
 		return
 	player.state = "EXPLORE"
 	player.pos.x = clampf(player.pos.x + 460, 40, WORLD_W - 60)
-	turn_log = "%s avanca pela %s." % [character_profile.name, maps[map_index].title]
-	_show_banner(turn_log)
+	_push_turn_log("%s avanca pela %s." % [character_profile.name, maps[map_index].title])
 	_try_nearby_interaction()
 	_update_checkpoint()
 	_check_map_exit()
@@ -2127,14 +2242,16 @@ func _try_nearby_interaction() -> bool:
 			player.inventory[item.name] = int(player.inventory.get(item.name, 0)) + int(item.amount)
 			_record_action("item_collected", {"item": item.name, "amount": item.amount, "map": maps[map_index].id})
 			_save_game()
-			turn_log = "%s x%d coletado." % [String(item.name), int(item.amount)]
-			_show_banner(turn_log)
+			_push_turn_log("%s x%d coletado." % [String(item.name), int(item.amount)])
 			return true
 	for npc in npcs:
 		if absf(float(npc.pos.x) - player.pos.x) < 105:
-			dialogue = {"active": true, "name": npc.name, "lines": npc.lines, "index": 0}
+			var npc_lines: Array = Array(npc.lines).duplicate()
+			for line in _scene_dialogue_lines():
+				npc_lines.append(String(line))
+			dialogue = {"active": true, "name": npc.name, "lines": npc_lines, "index": 0}
 			paused = true
-			turn_log = "Conversa iniciada com %s." % String(npc.name)
+			_push_turn_log("Conversa iniciada com %s." % String(npc.name))
 			return true
 	return false
 
@@ -2468,8 +2585,12 @@ func _update_ui() -> void:
 			panel_label.size = Vector2(336, 174)
 		panel_label.add_theme_font_size_override("font_size", 15)
 	else:
-		panel_label.position = offset + Vector2(790, 24)
-		panel_label.size = Vector2(460, 250)
+		if paused and overlay != "" and overlay != "pause":
+			panel_label.position = offset + Vector2(86, 152)
+			panel_label.size = Vector2(436, 470)
+		else:
+			panel_label.position = offset + Vector2(790, 24)
+			panel_label.size = Vector2(460, 250)
 		panel_label.add_theme_font_size_override("font_size", int(game_settings.ui_text_size))
 	panel_label.text = _panel_text()
 
@@ -2543,8 +2664,18 @@ func _panel_text() -> String:
 	var target := _current_turn_target()
 	var target_line := "Alvo: nenhum"
 	if not target.is_empty():
-		target_line = "Alvo: %s HP %d/%d" % [String(target.get("name", "Inimigo")), int(target.get("hp", 0)), int(target.get("max_hp", 1))]
-	var text := "%s\nModo: RPG de turno\n%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s\n\n%s" % [maps[map_index].goal, target_line, living, player.loyalty, "pronta" if player.special_cd <= 0 else "%.1fs" % player.special_cd, turn_log]
+		target_line = "Alvo: %s HP %d/%d | Intencao: %s" % [String(target.get("name", "Inimigo")), int(target.get("hp", 0)), int(target.get("max_hp", 1)), _enemy_intent(target)]
+	var log_lines := "\n".join(turn_history)
+	var text := "%s\nModo: RPG de turno | Turno %d\n%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s\n\nCena: %s\n\nUltimos eventos:\n%s" % [
+		maps[map_index].goal,
+		turn_count,
+		target_line,
+		living,
+		player.loyalty,
+		"pronta" if player.special_cd <= 0 else "%.1fs" % player.special_cd,
+		_scene_battle_text(),
+		log_lines if not log_lines.is_empty() else turn_log
+	]
 	if banner_timer > 0:
 		text += "\n\n" + banner
 	return text
@@ -2714,14 +2845,36 @@ func _character_panel_text() -> String:
 func _quests_panel_text() -> String:
 	var current: Dictionary = maps[map_index]
 	var living := enemies.filter(func(e): return not e.dead).size()
-	return "MISSOES\n\nCapitulo atual: %s (%d/%d)\nObjetivo: %s\nInimigos restantes: %d\n\nSeguimento:\n1 Wood: queda do exercito e Marca Divina.\n2 Gradon: portoes, Conselho e intriga politica.\n3 Forja: armas Aes e ferramentas de Robert.\n4 Michael: sombras, mercenarios e Corvus Stipulation.\n\nGanchos de jogabilidade:\n- Canis Ferox ensina esquiva.\n- Barbaro pesado ensina ataque carregado.\n- Ogre e Corvus exigem bloqueio, Marca e leitura de ataque." % [current.title, map_index + 1, maps.size(), current.goal, living]
+	var lines := [
+		"MISSOES",
+		"",
+		"Capitulo atual: %s (%d/%d)" % [current.title, map_index + 1, maps.size()],
+		"Objetivo: %s" % String(current.goal),
+		"Inimigos restantes: %d" % living,
+		"",
+		"Entrada da cena:",
+		_scene_intro_text(),
+		"",
+		"Dica de turno:",
+		_scene_battle_text(),
+		"",
+		"Conclusao prevista:",
+		_scene_clear_text(),
+		"",
+		"Falas-chave:"
+	]
+	for line in _scene_dialogue_lines():
+		lines.append("- " + String(line))
+	return "\n".join(lines)
 
 
 func _map_panel_text() -> String:
-	var lines := ["MAPA E CENAS", "", "Cada cena tem carregamento, objetivo, inimigos, itens e NPCs.", ""]
+	var lines := ["MAPA E CENAS", "", "Cada cena tem carregamento, objetivo, inimigos, itens, NPCs, fala e funcao de turno.", ""]
 	for i in range(maps.size()):
 		lines.append("%s %d. %s" % [">" if i == map_index else " ", i + 1, maps[i].title])
 		lines.append("    %s" % String(maps[i].goal))
+		var script: Dictionary = scene_scripts.get(String(maps[i].id), {})
+		lines.append("    Cena: %s" % String(script.get("battle", "Sem roteiro.")))
 	lines.append("")
 	lines.append("Funcao: orientar a campanha e mostrar a proxima tela antes da transicao.")
 	return "\n".join(lines)
@@ -3062,10 +3215,185 @@ func _draw_name(value: String, p: Vector2) -> void:
 	draw_string(ThemeDB.fallback_font, p, value, HORIZONTAL_ALIGNMENT_CENTER, 120, 18, Color("#e8ddc0"))
 
 
+func _draw_sketch_rect(rect: Rect2, color: Color, thickness := 2.0) -> void:
+	draw_rect(rect, Color("#020407", 0.72), true)
+	draw_rect(rect, color, false, thickness)
+	draw_rect(rect.grow(-5), Color(color.r, color.g, color.b, 0.28), false, 1.0)
+	var cut := 26.0
+	for corner in [rect.position, rect.position + Vector2(rect.size.x, 0), rect.position + rect.size, rect.position + Vector2(0, rect.size.y)]:
+		var sx := -1.0 if corner.x > rect.position.x else 1.0
+		var sy := -1.0 if corner.y > rect.position.y else 1.0
+		draw_line(corner, corner + Vector2(sx * cut, 0), color, thickness + 1.0)
+		draw_line(corner, corner + Vector2(0, sy * cut), color, thickness + 1.0)
+
+
+func _draw_rpg_tabs(active: String) -> void:
+	var tabs: Array[Dictionary] = [
+		{"id": "character", "label": "Personagem"},
+		{"id": "inventory", "label": "Inventario"},
+		{"id": "equipment", "label": "Arsenal"},
+		{"id": "abilities", "label": "Habilidades"},
+		{"id": "map", "label": "Mapa"},
+		{"id": "quests", "label": "Missoes"}
+	]
+	draw_circle(Vector2(108, 64), 20, Color("#f6f3ed"))
+	draw_string(ThemeDB.fallback_font, Vector2(86, 72), "L1", HORIZONTAL_ALIGNMENT_CENTER, 42, 18, Color("#050505"))
+	draw_circle(Vector2(1156, 64), 20, Color("#f6f3ed"))
+	draw_string(ThemeDB.fallback_font, Vector2(1134, 72), "R1", HORIZONTAL_ALIGNMENT_CENTER, 42, 18, Color("#050505"))
+	var x := 210.0
+	for tab in tabs:
+		var id := String(tab.id)
+		var selected := active == id or (active == "forge" and id == "equipment") or (active == "shop" and id == "inventory") or (active == "codex" and id == "quests")
+		var color := Color("#6ee7cf") if selected else Color("#e8ddc0", 0.76)
+		draw_string(ThemeDB.fallback_font, Vector2(x, 70), String(tab.label), HORIZONTAL_ALIGNMENT_CENTER, 150, 25 if selected else 22, color)
+		if selected:
+			draw_line(Vector2(x + 18, 82), Vector2(x + 132, 82), Color("#00e7ff"), 3.0)
+		x += 158.0
+	draw_line(Vector2(86, 102), Vector2(1194, 102), Color("#e8e6df", 0.72), 2.0)
+
+
+func _draw_item_icon(center: Vector2, name: String, tint: Color) -> void:
+	draw_rect(Rect2(center.x - 38, center.y - 38, 76, 76), Color("#05070b", 0.86))
+	draw_rect(Rect2(center.x - 38, center.y - 38, 76, 76), tint, false, 2.0)
+	if name.contains("Racao") or name.contains("Bolsa"):
+		draw_rect(Rect2(center.x - 22, center.y - 4, 44, 24), Color("#9b6a43"))
+		draw_rect(Rect2(center.x - 14, center.y - 20, 28, 20), Color("#6f442a"))
+	elif name.contains("Ferro") or name.contains("Armadura"):
+		draw_rect(Rect2(center.x - 22, center.y - 18, 44, 44), Color("#b8bec4"))
+		draw_line(center + Vector2(-20, -8), center + Vector2(20, 18), Color("#5d6368"), 4.0)
+	elif name.contains("Aes") or name.contains("Marca"):
+		_draw_divine_star(center, 30)
+	elif name.contains("Lanca"):
+		draw_line(center + Vector2(-26, 26), center + Vector2(28, -28), Color("#e8e6df"), 5.0)
+		draw_rect(Rect2(center.x + 21, center.y - 33, 12, 12), Color("#6ee7cf"))
+	elif name.contains("Machado") or name.contains("Alabarda"):
+		draw_line(center + Vector2(-24, 24), center + Vector2(20, -20), Color("#8b6b45"), 5.0)
+		draw_rect(Rect2(center.x + 12, center.y - 30, 18, 20), Color("#d8d8cc"))
+	else:
+		draw_line(center + Vector2(-24, 24), center + Vector2(26, -26), Color("#d8d8cc"), 5.0)
+		draw_polygon(PackedVector2Array([center + Vector2(30, -30), center + Vector2(14, -3), center + Vector2(3, -14)]), PackedColorArray([Color("#f6e7b1")]))
+
+
+func _draw_rpg_item_card(rect: Rect2, title: String, detail: String, selected: bool) -> void:
+	var rim := Color("#00e7ff") if selected else Color("#e8e6df", 0.82)
+	_draw_sketch_rect(rect, rim, 2.0 if selected else 1.2)
+	_draw_item_icon(rect.position + Vector2(62, rect.size.y * 0.5), title, Color("#00e7ff", 0.85 if selected else 0.45))
+	draw_string(ThemeDB.fallback_font, rect.position + Vector2(122, 32), title, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 132, 21, Color("#f6e7b1"))
+	draw_string(ThemeDB.fallback_font, rect.position + Vector2(122, 62), detail, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 132, 15, Color("#d7e3df", 0.86))
+
+
+func _draw_rpg_overlay_visual(screen_name: String) -> void:
+	draw_rect(Rect2(0, 0, 1280, 720), Color("#02050b", 0.93))
+	draw_rect(Rect2(0, 0, 1280, 720), Color("#062330", 0.28))
+	_draw_rpg_tabs(screen_name)
+	var frame := Rect2(64, 120, 1152, 540)
+	_draw_sketch_rect(frame, Color("#e8e6df", 0.78), 2.0)
+	match screen_name:
+		"inventory", "shop", "forge":
+			_draw_inventory_visual(frame, screen_name)
+		"equipment":
+			_draw_equipment_visual(frame)
+		"character":
+			_draw_character_sheet_visual(frame)
+		"map", "quests", "codex", "settings", "direction", "database", "flow":
+			_draw_archive_visual(frame, screen_name)
+		_:
+			_draw_archive_visual(frame, screen_name)
+
+
+func _draw_inventory_visual(frame: Rect2, screen_name: String) -> void:
+	var rows: Array[String] = _inventory_rows()
+	var list_x := frame.position.x + 500
+	var start_y := frame.position.y + 56
+	var title := _screen_display_name(screen_name)
+	draw_string(ThemeDB.fallback_font, Vector2(list_x, frame.position.y + 34), title, HORIZONTAL_ALIGNMENT_LEFT, 320, 28, Color("#6ee7cf"))
+	for i in range(mini(5, max(1, rows.size()))):
+		var item_name := rows[i] if i < rows.size() else "Espaco vazio"
+		var qty := int(player.inventory.get(item_name, 0))
+		_draw_rpg_item_card(Rect2(list_x, start_y + i * 88, 558, 76), item_name, "Quantidade: %d | Moedas: %d" % [qty, int(player.coins)], i == inventory_index)
+	var selected := rows[clampi(inventory_index, 0, rows.size() - 1)] if not rows.is_empty() else "Sem item"
+	_draw_item_icon(frame.position + Vector2(930, 430), selected, Color("#31ff77", 0.72))
+	draw_string(ThemeDB.fallback_font, frame.position + Vector2(802, 514), "Bolsa de Gradon", HORIZONTAL_ALIGNMENT_CENTER, 260, 22, Color("#f6e7b1"))
+
+
+func _draw_equipment_visual(frame: Rect2) -> void:
+	var model_pos := frame.position + Vector2(780, 438)
+	draw_circle(model_pos + Vector2(0, 22), 98, Color("#f6f3ed", 0.11))
+	_draw_character_model(character_profile.get("type", "William"), model_pos, 1, 2.4, "IDLE")
+	var slots: Array[Dictionary] = [
+		{"name": String(player.equipment.weapon), "pos": frame.position + Vector2(560, 130), "line": model_pos + Vector2(-58, -118)},
+		{"name": String(player.equipment.armor), "pos": frame.position + Vector2(925, 168), "line": model_pos + Vector2(28, -106)},
+		{"name": String(player.equipment.tool), "pos": frame.position + Vector2(956, 368), "line": model_pos + Vector2(54, -28)},
+		{"name": "Botas de marcha", "pos": frame.position + Vector2(580, 412), "line": model_pos + Vector2(-18, 28)}
+	]
+	for slot in slots:
+		var p: Vector2 = slot.pos
+		draw_line(Vector2(p.x + 76, p.y + 38), slot.line, Color("#e8e6df", 0.78), 2.0)
+		_draw_rpg_item_card(Rect2(p, Vector2(270, 78)), String(slot.name), "Equipado no herdeiro", true)
+	draw_string(ThemeDB.fallback_font, frame.position + Vector2(612, 48), "Chamadas de equipamento", HORIZONTAL_ALIGNMENT_LEFT, 420, 25, Color("#6ee7cf"))
+
+
+func _draw_character_sheet_visual(frame: Rect2) -> void:
+	_draw_character_model(character_profile.get("type", "William"), frame.position + Vector2(672, 442), 1, 2.25, "IDLE")
+	var rows: Array[String] = _progression_rows()
+	for i in range(mini(rows.size(), 8)):
+		var parts := rows[i].split(":")
+		var name := String(parts[1])
+		var value := int(player.skills.get(name, player.instincts.get(name, 0)))
+		var bar_rect := Rect2(frame.position.x + 520, frame.position.y + 60 + i * 40, 300, 15)
+		draw_string(ThemeDB.fallback_font, bar_rect.position + Vector2(0, -5), name, HORIZONTAL_ALIGNMENT_LEFT, 160, 16, Color("#e8ddc0"))
+		draw_rect(Rect2(bar_rect.position + Vector2(155, 0), Vector2(140, 10)), Color("#12151b"))
+		draw_rect(Rect2(bar_rect.position + Vector2(155, 0), Vector2(28 * value, 10)), Color("#6ee7cf"))
+	var c := frame.position + Vector2(980, 244)
+	var stats := [player.max_hp / 180.0, player.stamina / 130.0, player.courage / 130.0, player.loyalty / 100.0, (int(player.skills.get("Forca", 0)) + 1) / 6.0]
+	var poly := PackedVector2Array()
+	for i in range(stats.size()):
+		var angle := -PI * 0.5 + TAU * float(i) / float(stats.size())
+		poly.append(c + Vector2(cos(angle), sin(angle)) * 84.0 * clampf(float(stats[i]), 0.18, 1.0))
+		draw_line(c, c + Vector2(cos(angle), sin(angle)) * 92.0, Color("#e8e6df", 0.28), 1.0)
+	draw_polygon(poly, PackedColorArray([Color("#6ee7cf", 0.28)]))
+	draw_polyline(poly + PackedVector2Array([poly[0]]), Color("#f6e7b1", 0.88), 2.0)
+
+
+func _draw_archive_visual(frame: Rect2, screen_name: String) -> void:
+	var start := frame.position + Vector2(520, 72)
+	draw_string(ThemeDB.fallback_font, frame.position + Vector2(534, 42), _screen_display_name(screen_name), HORIZONTAL_ALIGNMENT_LEFT, 480, 28, Color("#6ee7cf"))
+	for i in range(maps.size()):
+		var node := start + Vector2(i * 86, 198 + sin(float(i) * 1.7) * 48)
+		if i > 0:
+			var prev := start + Vector2((i - 1) * 86, 198 + sin(float(i - 1) * 1.7) * 48)
+			draw_line(prev, node, Color("#e8e6df", 0.54), 2.0)
+		draw_circle(node, 18, Color("#6ee7cf", 0.88) if i == map_index else Color("#2b332f", 0.92))
+		draw_circle(node, 10, Color("#d8b45a", 0.82))
+	draw_string(ThemeDB.fallback_font, frame.position + Vector2(540, 380), "Campanha em sequencia: login, personagem, conselho, mapas, turnos, forja, mercado e banco local.", HORIZONTAL_ALIGNMENT_LEFT, 560, 18, Color("#e8ddc0"))
+
+
+func _draw_turn_command_bar() -> void:
+	if paused or victory or game_over or not game_started:
+		return
+	var commands: Array[Dictionary] = [
+		{"key": "A/D", "name": "Alvo", "icon": "left"},
+		{"key": "J", "name": "Atacar", "icon": "attack"},
+		{"key": "E", "name": "Forte", "icon": "attack"},
+		{"key": "L", "name": "Guarda", "icon": "block"},
+		{"key": "K", "name": "Esquiva", "icon": "dodge"},
+		{"key": "Q", "name": "Marca", "icon": "mark"},
+		{"key": "Esp", "name": "Item", "icon": "jump"},
+		{"key": "Shift", "name": "Explorar", "icon": "right"}
+	]
+	var base := Vector2(176, 626)
+	for i in range(commands.size()):
+		var rect := Rect2(base + Vector2(i * 112, 0), Vector2(92, 64))
+		_draw_oct_button(rect, String(commands[i].name), String(commands[i].icon), false, Color("#171b17"), Color("#d8b45a"))
+		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0, -8), String(commands[i].key), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Color("#f6e7b1"))
+
+
 func _draw_overlays() -> void:
 	if paused or game_over or victory or not game_started:
 		draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0, 0, 0, 0.35))
-	if paused or victory or not game_started:
+	if game_started and paused and overlay != "" and overlay != "pause" and not dialogue.active:
+		_draw_rpg_overlay_visual(overlay)
+	elif paused or victory or not game_started:
 		_draw_screen_panel(Rect2(772, 14, 492, 272), overlay if game_started else auth_screen)
 	if not game_started:
 		_draw_frontend_touch_targets()
@@ -3078,6 +3406,8 @@ func _draw_overlays() -> void:
 		_draw_transition()
 	if loading_active:
 		_draw_loading_screen()
+	draw_set_transform(_stage_offset(), 0.0, Vector2.ONE)
+	_draw_turn_command_bar()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_draw_touch_controls()
 

@@ -1,0 +1,12 @@
+AESDIVINUS v1.7.0
+
+- Converte a campanha principal para apresentacao de RPG de turno: turno contado, alvo selecionavel, intencao do inimigo, historico de eventos e barra de comandos.
+- Adiciona roteiros completos por cena: introducao, dica de batalha, conclusao e falas-chave para Wood, Gradon, Conselho, Forja e Michael.
+- Redesenha telas de sistemas com inspiracao RPG: abas superiores, molduras tipo desenho manual, cartas de item, chamadas de equipamento e grafico de atributos.
+- Melhora missoes e mapa para mostrar cena, funcao, falas e sequencia de campanha.
+- Atualiza Android para versionCode 30 / versionName 1.7.0.
+
+Builds geradas localmente:
+- builds/android/AESDIVINUS.apk
+- builds/windows/AESDIVINUS.exe
+- builds/linux/AESDIVINUS.x86_64
