@@ -1,0 +1,8 @@
+AESDIVINUS v1.9.0
+
+- Transforma cada cena da campanha em uma missao especifica com titulo, ato, tipo, nivel de historia, recompensa e efeito narrativo.
+- Concluir missoes agora muda o nivel do personagem, XP, pontos de habilidade, pontos de instinto, lealdade, coragem e flags da historia.
+- Missao atual aparece no HUD de combate com status, capitulo e progresso de nivel.
+- Telas de Personagem, Missoes, Mapa e Fluxo mostram nivel, XP, historia, recompensas e mudancas narrativas.
+- Save local agora guarda nivel, XP, capitulo da historia, missoes concluidas e flags narrativas.
+- Atualiza Android para versionCode 32 / versionName 1.9.0.

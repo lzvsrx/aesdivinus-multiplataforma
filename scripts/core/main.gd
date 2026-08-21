@@ -7,7 +7,7 @@ const BASE_VIEWPORT_SIZE := Vector2(1280, 720)
 const WORLD_W := 3600.0
 const LEGACY_SAVE_PATH := "user://aesdivinus_save.json"
 const DB_PATH := "user://aesdivinus_db.json"
-const BUILD_VERSION := "1.8.0"
+const BUILD_VERSION := "1.9.0"
 const DEVELOPER_NAME := "Espíritos dos jogos"
 const DEVELOPER_MOTTO := "Uma empresa pode ter dinheiro e prédios, mas nós temos o espírito."
 
@@ -281,8 +281,13 @@ var player := {
 	"charge": 0.0,
 	"special_cd": 0.0,
 	"coins": 35,
+	"level": 1,
+	"xp": 0,
+	"story_chapter": 1,
 	"skill_points": 1,
 	"instinct_points": 1,
+	"completed_missions": {},
+	"story_flags": {},
 	"equipment": {"weapon": "Espada de Gradon", "tool": "Kit de Campanha", "armor": "Couro militar"},
 	"weapon_levels": {"Espada de Gradon": 1},
 	"tool_levels": {"Kit de Campanha": 1},
@@ -379,6 +384,21 @@ var screen_flow := [
 	{"id": "game", "title": "6. Campanha", "function": "Fases em sequencia: Wood, Gradon, Conselho, Forja, Ducados, Michael, Umbrae e Sanctis."},
 	{"id": "victory", "title": "7. Conclusao do arco", "function": "Fecha a sequencia atual e salva progresso para o proximo ato."}
 ]
+var mission_catalog := {
+	"wood_forest_01": {"title": "Missao 01 - A Marca na Floresta", "chapter": "Ato I: Wood", "type": "tutorial", "story_level": 1, "xp": 65, "skill": 1, "instinct": 0, "loyalty": 2, "courage": 8, "flag": "mark_awakened", "change": "A Marca Divina desperta e William passa a enxergar corrupcao em turno."},
+	"wood_forest_02": {"title": "Missao 02 - Emboscada do Canis", "chapter": "Ato I: Wood", "type": "sobrevivencia", "story_level": 2, "xp": 85, "skill": 1, "instinct": 1, "loyalty": 3, "courage": 6, "flag": "canis_defeated", "change": "A escolta aprende que as feras rastreiam Aes Divinus e precisa mudar a rota."},
+	"wood_forest_03": {"title": "Missao 03 - O Relato Manchado", "chapter": "Ato I: Wood", "type": "chefe", "story_level": 3, "xp": 120, "skill": 1, "instinct": 1, "loyalty": 4, "courage": 10, "flag": "wood_report_found", "change": "O Relato Manchado prova que a queda do exercito foi preparada por dentro."},
+	"gradon_gate": {"title": "Missao 04 - Portoes de Gradon", "chapter": "Ato II: Gradon", "type": "politica", "story_level": 4, "xp": 105, "skill": 1, "instinct": 0, "loyalty": 8, "courage": 4, "flag": "gradon_gate_opened", "change": "O povo ve William entrar em Gradon como defensor, nao como fugitivo."},
+	"gradon_council": {"title": "Missao 05 - Tribunal dos Duques", "chapter": "Ato II: Gradon", "type": "intriga", "story_level": 5, "xp": 135, "skill": 1, "instinct": 1, "loyalty": 6, "courage": 6, "flag": "council_shadow_revealed", "change": "O Conselho deixa de tratar William como suspeito e aponta a rota para a Forja."},
+	"robert_forge": {"title": "Missao 06 - Metal Verde-Dourado", "chapter": "Ato II: Gradon", "type": "forja", "story_level": 6, "xp": 130, "skill": 1, "instinct": 1, "loyalty": 4, "courage": 8, "flag": "aes_weapon_forged", "change": "Armas Aes entram na historia e liberam resposta real contra corrompidos fortes."},
+	"michael_shadow_woods": {"title": "Missao 07 - Floresta sem Luz", "chapter": "Ato III: Michael", "type": "investigacao", "story_level": 7, "xp": 150, "skill": 1, "instinct": 1, "loyalty": 5, "courage": 8, "flag": "corvus_seen", "change": "Corvus Stipulation revela que Michael tenta apagar nomes e identidades."},
+	"roberts_grain_road": {"title": "Missao 08 - Pao de Roberts", "chapter": "Ato III: Ducados", "type": "protecao", "story_level": 8, "xp": 140, "skill": 1, "instinct": 0, "loyalty": 10, "courage": 4, "flag": "roberts_saved", "change": "Roberts preserva os celeiros e a lealdade popular de William aumenta."},
+	"armand_barracks": {"title": "Missao 09 - Juramento de Armand", "chapter": "Ato III: Ducados", "type": "disciplina", "story_level": 9, "xp": 155, "skill": 1, "instinct": 1, "loyalty": 9, "courage": 5, "flag": "armand_oath_restored", "change": "O quartel recupera disciplina e soldados deixam de obedecer ordens falsas."},
+	"legrand_chapel": {"title": "Missao 10 - Sino de Legrand", "chapter": "Ato III: Ducados", "type": "revelacao", "story_level": 10, "xp": 165, "skill": 1, "instinct": 1, "loyalty": 6, "courage": 9, "flag": "legrand_false_faith", "change": "A fe falsificada de Legrand expõe uma lista de nomes apagados do Conselho."},
+	"michael_keep": {"title": "Missao 11 - Contratos de Sombra", "chapter": "Ato IV: Michael", "type": "infiltracao", "story_level": 11, "xp": 185, "skill": 1, "instinct": 1, "loyalty": 5, "courage": 10, "flag": "michael_contracts_found", "change": "A neutralidade de Michael cai: havia contrato direto com Stipulation."},
+	"umbrae_village": {"title": "Missao 12 - Vila das Portas", "chapter": "Ato IV: Umbrae", "type": "resgate", "story_level": 12, "xp": 200, "skill": 1, "instinct": 2, "loyalty": 12, "courage": 6, "flag": "umbrae_village_saved", "change": "William aprende que vencer corrupcao tambem exige salvar quem ainda pode voltar."},
+	"sanctis_reliquary": {"title": "Missao 13 - Voz sob a Coroa", "chapter": "Ato V: Sanctis", "type": "final", "story_level": 13, "xp": 260, "skill": 2, "instinct": 2, "loyalty": 15, "courage": 15, "flag": "vox_stipulation_defeated", "change": "A Vox Stipulation cai e o proximo ato passa a girar em torno do preco da coroa."}
+}
 var main_menu_options := ["Novo Jogo", "Carregar", "Criar Personagem", "Sistemas", "Fluxo de Telas", "Sair"]
 var system_overlay_order := ["inventory", "equipment", "character", "quests", "map", "forge", "shop", "settings", "codex", "direction", "database", "flow"]
 var weapon_catalog := {
@@ -1241,6 +1261,9 @@ func _load_map(idx: int) -> void:
 	scene_clear_logged = false
 	turn_history = []
 	turn_log = _scene_intro_text()
+	var mission := _current_mission()
+	if not mission.is_empty():
+		player.story_chapter = max(int(player.story_chapter), int(mission.story_level))
 	enemies = []
 	items = []
 	npcs = []
@@ -1259,6 +1282,8 @@ func _load_map(idx: int) -> void:
 		npcs.append(npc.duplicate(true))
 	boss_mode = false
 	_push_turn_log(String(data.message))
+	if not mission.is_empty():
+		_push_turn_log("%s | %s" % [String(mission.title), String(mission.change)])
 	_push_turn_log(_scene_battle_text())
 
 
@@ -1593,6 +1618,56 @@ func _push_turn_log(value: String) -> void:
 	_show_banner(value)
 
 
+func _current_mission() -> Dictionary:
+	var map_id := String(maps[map_index].get("id", ""))
+	return mission_catalog.get(map_id, {})
+
+
+func _mission_completed(map_id: String) -> bool:
+	return bool(player.completed_missions.get(map_id, false))
+
+
+func _xp_to_next_level() -> int:
+	return 100 + (int(player.level) - 1) * 55
+
+
+func _grant_xp(amount: int) -> void:
+	player.xp = int(player.xp) + maxi(0, amount)
+	while int(player.xp) >= _xp_to_next_level():
+		player.xp = int(player.xp) - _xp_to_next_level()
+		player.level = int(player.level) + 1
+		player.skill_points = int(player.skill_points) + 1
+		if int(player.level) % 2 == 0:
+			player.instinct_points = int(player.instinct_points) + 1
+		_float_text(player.pos + Vector2(0, -116), "NIVEL %d" % int(player.level), Color("#f6e7b1"))
+
+
+func _complete_current_mission() -> void:
+	var map_id := String(maps[map_index].get("id", ""))
+	if _mission_completed(map_id):
+		return
+	var mission := _current_mission()
+	if mission.is_empty():
+		return
+	player.completed_missions[map_id] = true
+	player.story_flags[String(mission.flag)] = true
+	player.story_chapter = max(int(player.story_chapter), int(mission.story_level) + 1)
+	player.loyalty = clampi(int(player.loyalty) + int(mission.loyalty), 0, 100)
+	player.courage = clampf(float(player.courage) + float(mission.courage), 0.0, 100.0)
+	player.skill_points = int(player.skill_points) + int(mission.skill)
+	player.instinct_points = int(player.instinct_points) + int(mission.instinct)
+	_grant_xp(int(mission.xp))
+	_record_action("mission_completed", {
+		"map": map_id,
+		"mission": mission.title,
+		"chapter": mission.chapter,
+		"story_level": mission.story_level,
+		"player_level": player.level,
+		"change": mission.change
+	})
+	_push_turn_log("Missao concluida: %s. %s" % [String(mission.title), String(mission.change)])
+
+
 func _apply_character_template() -> void:
 	var stats := {
 		"William": {"hp": 130, "stamina": 100, "courage": 100, "loyalty": 55},
@@ -1625,10 +1700,20 @@ func _normalize_player_runtime_data() -> void:
 			player.inventory[key] = inventory_defaults[key]
 	if not player.has("coins"):
 		player.coins = 35
+	if not player.has("level"):
+		player.level = 1
+	if not player.has("xp"):
+		player.xp = 0
+	if not player.has("story_chapter"):
+		player.story_chapter = 1
 	if not player.has("skill_points"):
 		player.skill_points = 0
 	if not player.has("instinct_points"):
 		player.instinct_points = 0
+	if not player.has("completed_missions") or typeof(player.completed_missions) != TYPE_DICTIONARY:
+		player.completed_missions = {}
+	if not player.has("story_flags") or typeof(player.story_flags) != TYPE_DICTIONARY:
+		player.story_flags = {}
 	if not player.has("base_max_hp"):
 		player.base_max_hp = player.max_hp
 	if not player.has("equipment") or typeof(player.equipment) != TYPE_DICTIONARY:
@@ -2703,6 +2788,7 @@ func _damage_player(amount: int, dir: int) -> void:
 func _check_map_exit() -> void:
 	var living := enemies.filter(func(e): return not e.dead)
 	if player.pos.x > WORLD_W - 140 and living.is_empty():
+		_complete_current_mission()
 		if map_index < maps.size() - 1:
 			_begin_map_load(map_index + 1, "map_exit")
 		else:
@@ -2753,7 +2839,7 @@ func _update_ui() -> void:
 	stamina_bar.size.x = 210 * player.stamina / 100.0
 	courage_bar.size.x = 190 * player.courage / 100.0
 	var data: Dictionary = maps[map_index]
-	title_label.text = "AESDIVINUS | %s" % auth_screen if not game_started else "%s | TURNO %s" % [data.title, player.state]
+	title_label.text = "AESDIVINUS | %s" % auth_screen if not game_started else "%s | NV %d | HIST %d" % [data.title, int(player.level), int(player.story_chapter)]
 	hint_label.text = _hint_text()
 	title_label.position = offset + Vector2(22, 88)
 	hint_label.visible = not (_is_touch_build() and game_started and overlay == "" and not game_over and not victory)
@@ -2847,9 +2933,16 @@ func _panel_text() -> String:
 	if not target.is_empty():
 		target_line = "Alvo: %s HP %d/%d | Intencao: %s" % [String(target.get("name", "Inimigo")), int(target.get("hp", 0)), int(target.get("max_hp", 1)), _enemy_intent(target)]
 	var log_lines := "\n".join(turn_history)
-	var text := "%s\nModo: RPG de turno | Turno %d\n%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s\n\nCena: %s\n\nUltimos eventos:\n%s" % [
+	var mission := _current_mission()
+	var mission_line := "%s | %s | %s" % [String(mission.get("title", "Missao sem titulo")), String(mission.get("chapter", "Ato")), "concluida" if _mission_completed(String(maps[map_index].id)) else "ativa"]
+	var text := "%s\nModo: RPG de turno | Turno %d\nNivel: %d XP %d/%d | Historia %d\nMissao: %s\n%s\nInimigos restantes: %d\nLealdade: %d\nMarca Divina: %s\n\nCena: %s\n\nUltimos eventos:\n%s" % [
 		maps[map_index].goal,
 		turn_count,
+		int(player.level),
+		int(player.xp),
+		_xp_to_next_level(),
+		int(player.story_chapter),
+		mission_line,
 		target_line,
 		living,
 		player.loyalty,
@@ -2969,9 +3062,10 @@ func _flow_panel_text() -> String:
 	lines.append("")
 	lines.append("Sequencia da campanha:")
 	for i in range(maps.size()):
-		lines.append("%d. %s -> %s" % [i + 1, maps[i].title, maps[i].goal])
+		var mission: Dictionary = mission_catalog.get(String(maps[i].id), {})
+		lines.append("%d. %s -> %s" % [i + 1, String(mission.get("title", maps[i].title)), maps[i].goal])
 	lines.append("")
-	lines.append("Ao trocar de tela ou cena, o jogo mostra CARREGANDO e salva o estado no banco local.")
+	lines.append("Ao concluir missao, o jogo altera nivel, XP, pontos, lealdade e bandeiras de historia no banco local.")
 	return "\n".join(lines)
 
 
@@ -3009,7 +3103,7 @@ func _equipment_panel_text() -> String:
 func _character_panel_text() -> String:
 	var rows: Array[String] = _progression_rows()
 	progression_index = clampi(progression_index, 0, rows.size() - 1)
-	var lines := ["PERSONAGEM", "", "Nome: %s | %s de %s" % [character_profile.name, character_profile.class, character_profile.origin], "Base: %s" % character_profile.type, "Vida: %d/%d | Stamina: %d | Coragem: %d | Lealdade: %d" % [player.hp, player.max_hp, int(player.stamina), int(player.courage), player.loyalty], "Pontos de habilidade: %d | Pontos de instinto: %d" % [int(player.skill_points), int(player.instinct_points)], ""]
+	var lines := ["PERSONAGEM", "", "Nome: %s | %s de %s" % [character_profile.name, character_profile.class, character_profile.origin], "Base: %s" % character_profile.type, "Nivel: %d | XP: %d/%d | Historia: %d" % [int(player.level), int(player.xp), _xp_to_next_level(), int(player.story_chapter)], "Vida: %d/%d | Stamina: %d | Coragem: %d | Lealdade: %d" % [player.hp, player.max_hp, int(player.stamina), int(player.courage), player.loyalty], "Pontos de habilidade: %d | Pontos de instinto: %d" % [int(player.skill_points), int(player.instinct_points)], ""]
 	for i in range(rows.size()):
 		var row := rows[i]
 		var parts := row.split(":")
@@ -3026,8 +3120,16 @@ func _character_panel_text() -> String:
 func _quests_panel_text() -> String:
 	var current: Dictionary = maps[map_index]
 	var living := enemies.filter(func(e): return not e.dead).size()
+	var mission := _current_mission()
+	var mission_status := "concluida" if _mission_completed(String(current.id)) else "ativa"
 	var lines := [
 		"MISSOES",
+		"",
+		"Missao atual: %s" % String(mission.get("title", current.title)),
+		"Capitulo: %s | Tipo: %s | Status: %s" % [String(mission.get("chapter", "-")), String(mission.get("type", "-")), mission_status],
+		"Nivel da historia: %d | Nivel do herdeiro: %d" % [int(mission.get("story_level", map_index + 1)), int(player.level)],
+		"Recompensa: %d XP, +%d habilidade, +%d instinto, +%d lealdade" % [int(mission.get("xp", 0)), int(mission.get("skill", 0)), int(mission.get("instinct", 0)), int(mission.get("loyalty", 0))],
+		"Mudanca na historia: %s" % String(mission.get("change", "A campanha avanca.")),
 		"",
 		"Capitulo atual: %s (%d/%d)" % [current.title, map_index + 1, maps.size()],
 		"Objetivo: %s" % String(current.goal),
@@ -3052,7 +3154,10 @@ func _quests_panel_text() -> String:
 func _map_panel_text() -> String:
 	var lines := ["MAPA E CENAS", "", "Cada cena tem carregamento, objetivo, inimigos, itens, NPCs, fala e funcao de turno.", ""]
 	for i in range(maps.size()):
+		var mission: Dictionary = mission_catalog.get(String(maps[i].id), {})
+		var status := "OK" if _mission_completed(String(maps[i].id)) else ("ATIVA" if i == map_index else "BLOQ/PROX")
 		lines.append("%s %d. %s" % [">" if i == map_index else " ", i + 1, maps[i].title])
+		lines.append("    Missao: %s | Hist.%d | %s" % [String(mission.get("title", maps[i].title)), int(mission.get("story_level", i + 1)), status])
 		lines.append("    %s" % String(maps[i].goal))
 		var script: Dictionary = scene_scripts.get(String(maps[i].id), {})
 		lines.append("    Cena: %s" % String(script.get("battle", "Sem roteiro.")))
@@ -4088,8 +4193,13 @@ func _reset_game() -> void:
 		player.loyalty = 50
 	player.hp = player.max_hp
 	player.coins = 35
+	player.level = 1
+	player.xp = 0
+	player.story_chapter = 1
 	player.skill_points = 1
 	player.instinct_points = 1
+	player.completed_missions = {}
+	player.story_flags = {}
 	player.equipment = {"weapon": "Espada de Gradon", "tool": "Kit de Campanha", "armor": "Couro militar"}
 	player.weapon_levels = {"Espada de Gradon": 1}
 	player.tool_levels = {"Kit de Campanha": 1}
@@ -4121,8 +4231,13 @@ func _save_game() -> void:
 		"checkpoint": checkpoint,
 		"inventory": player.inventory,
 		"coins": player.coins,
+		"level": player.level,
+		"xp": player.xp,
+		"story_chapter": player.story_chapter,
 		"skill_points": player.skill_points,
 		"instinct_points": player.instinct_points,
+		"completed_missions": player.completed_missions,
+		"story_flags": player.story_flags,
 		"equipment": player.equipment,
 		"weapon_levels": player.weapon_levels,
 		"tool_levels": player.tool_levels,
@@ -4177,8 +4292,13 @@ func _load_save() -> void:
 	checkpoint = parsed.get("checkpoint", {"map_index": map_index, "pos_x": 120.0})
 	player.inventory = parsed.get("inventory", player.inventory)
 	player.coins = int(parsed.get("coins", player.get("coins", 35)))
+	player.level = int(parsed.get("level", player.get("level", 1)))
+	player.xp = int(parsed.get("xp", player.get("xp", 0)))
+	player.story_chapter = int(parsed.get("story_chapter", player.get("story_chapter", 1)))
 	player.skill_points = int(parsed.get("skill_points", player.get("skill_points", 0)))
 	player.instinct_points = int(parsed.get("instinct_points", player.get("instinct_points", 0)))
+	player.completed_missions = parsed.get("completed_missions", player.completed_missions)
+	player.story_flags = parsed.get("story_flags", player.story_flags)
 	player.equipment = parsed.get("equipment", player.equipment)
 	player.weapon_levels = parsed.get("weapon_levels", player.weapon_levels)
 	player.tool_levels = parsed.get("tool_levels", player.tool_levels)
@@ -4271,6 +4391,17 @@ func _run_smoke_test() -> void:
 	assert(maps.size() >= 13)
 	for scene_id in scene_scripts.keys():
 		assert(maps.any(func(m): return String(m.id) == String(scene_id)))
+	for mission_id in mission_catalog.keys():
+		assert(maps.any(func(m): return String(m.id) == String(mission_id)))
+	var old_story_chapter := int(player.story_chapter)
+	_load_map(0)
+	for enemy in enemies:
+		enemy.dead = true
+		enemy.hp = 0
+	player.pos.x = WORLD_W
+	_check_map_exit()
+	assert(_mission_completed("wood_forest_01"))
+	assert(int(player.story_chapter) > old_story_chapter)
 	for idx in range(maps.size()):
 		_load_map(idx)
 		_update_ui()
